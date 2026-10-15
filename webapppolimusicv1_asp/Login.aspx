@@ -13,10 +13,10 @@
         <div class="pm-auth-card">
             <div class="pm-auth-brand">
                 <span class="pm-brand-mark">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#F5EBDD" stroke-width="2" stroke-linecap="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#F3E4E7" stroke-width="2" stroke-linecap="round">
                         <path d="M9 18V5l10-2v13" />
-                        <circle cx="6" cy="18" r="3" fill="#F5EBDD" stroke="none" />
-                        <circle cx="16" cy="16" r="3" fill="#F5EBDD" stroke="none" />
+                        <circle cx="6" cy="18" r="3" fill="#F3E4E7" stroke="none" />
+                        <circle cx="16" cy="16" r="3" fill="#F3E4E7" stroke="none" />
                     </svg>
                 </span>
                 <h1>PoliMusic</h1>

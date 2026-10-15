@@ -13,7 +13,7 @@
         <div class="pm-auth-card" style="text-align:center;max-width:460px;">
             <h1><%= H(Code) %></h1>
             <h2 style="font-size:1.15rem;">No se pudo procesar la solicitud</h2>
-            <p style="color:#9C8571;font-size:0.88rem;">
+            <p style="color:#A9808B;font-size:0.88rem;">
                 <%= H(Detail) %>
             </p>
             <div style="margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">

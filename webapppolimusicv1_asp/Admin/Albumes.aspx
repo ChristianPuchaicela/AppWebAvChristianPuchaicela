@@ -47,7 +47,7 @@
         <div class="pm-modal">
             <h2>Nuevo álbum</h2>
             <div class="pm-field">
-                <label for="<%= txtNewTitle.ClientID %>">Título <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewTitle.ClientID %>">Título <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewTitle" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
@@ -72,7 +72,7 @@
         <div class="pm-modal">
             <h2>Editar álbum #<%= EditAlbum.IdAlbum %></h2>
             <div class="pm-field">
-                <label for="<%= txtTitle.ClientID %>">Título <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtTitle.ClientID %>">Título <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtTitle" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
@@ -89,7 +89,7 @@
             <% if (AlbumSongs.Count == 0) { %>
                 <div class="pm-empty-sm">Este álbum no tiene canciones en su lista.</div>
             <% } else { %>
-                <ul style="margin:0 0 18px;padding-left:20px;color:#C9B29A;font-size:0.87rem;">
+                <ul style="margin:0 0 18px;padding-left:20px;color:#D3AFB8;font-size:0.87rem;">
                     <% foreach (var s in AlbumSongs) { %>
                     <li><%= H(s.SongName) %></li>
                     <% } %>

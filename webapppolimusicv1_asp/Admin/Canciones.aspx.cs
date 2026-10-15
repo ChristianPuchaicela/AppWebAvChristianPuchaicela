@@ -120,12 +120,12 @@ namespace WebAppPoliMusicV1.Admin
                 string album;
                 if (albumOf.TryGetValue(s.IdSong, out album))
                 {
-                    sb.Append("<br><span style=\"font-size:0.76rem;color:#9C8571;\">Álbum: ").Append(H(album)).Append("</span>");
+                    sb.Append("<br><span style=\"font-size:0.76rem;color:#A9808B;\">Álbum: ").Append(H(album)).Append("</span>");
                 }
                 string artist;
                 if (artistOf.TryGetValue(s.IdSong, out artist) && artist != "Sin artista")
                 {
-                    sb.Append("<br><span style=\"font-size:0.76rem;color:#9C8571;\">Artista: ").Append(H(artist)).Append("</span>");
+                    sb.Append("<br><span style=\"font-size:0.76rem;color:#A9808B;\">Artista: ").Append(H(artist)).Append("</span>");
                 }
                 sb.Append("</td>");
                 sb.Append("<td data-label=\"Ruta\" style=\"font-size:0.79rem;word-break:break-all;\">")

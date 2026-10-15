@@ -49,15 +49,15 @@
         <div class="pm-modal">
             <h2>Nuevo usuario</h2>
             <div class="pm-field">
-                <label for="<%= txtNewUsername.ClientID %>">Usuario <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewUsername.ClientID %>">Usuario <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewUsername" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
-                <label for="<%= txtNewEmail.ClientID %>">Correo <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewEmail.ClientID %>">Correo <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewEmail" runat="server" CssClass="pm-input" TextMode="Email" MaxLength="50" />
             </div>
             <div class="pm-field">
-                <label for="<%= txtNewPassword.ClientID %>">Contraseña <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewPassword.ClientID %>">Contraseña <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewPassword" runat="server" CssClass="pm-input" TextMode="Password" MaxLength="128" />
                 <span class="pm-hint">Mínimo 8 caracteres. Se guarda cifrada.</span>
             </div>
@@ -83,11 +83,11 @@
         <div class="pm-modal">
             <h2>Editar usuario #<%= EditUser.IdUser %></h2>
             <div class="pm-field">
-                <label for="<%= txtUsername.ClientID %>">Usuario <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtUsername.ClientID %>">Usuario <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtUsername" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
-                <label for="<%= txtEmail.ClientID %>">Correo <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtEmail.ClientID %>">Correo <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtEmail" runat="server" CssClass="pm-input" TextMode="Email" MaxLength="50" />
             </div>
             <div class="pm-field">

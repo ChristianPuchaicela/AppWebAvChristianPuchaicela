@@ -111,7 +111,7 @@
         <div class="pm-modal">
             <h2>Editar playlist</h2>
             <div class="pm-field">
-                <label for="<%= txtEditTitle.ClientID %>">Título <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtEditTitle.ClientID %>">Título <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtEditTitle" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">

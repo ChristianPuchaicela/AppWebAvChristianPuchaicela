@@ -48,11 +48,11 @@
         <div class="pm-modal">
             <h2>Nueva canción</h2>
             <div class="pm-field">
-                <label for="<%= txtNewName.ClientID %>">Nombre <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewName.ClientID %>">Nombre <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewName" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
-                <label for="<%= txtNewPath.ClientID %>">Ruta del archivo <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewPath.ClientID %>">Ruta del archivo <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewPath" runat="server" CssClass="pm-input" MaxLength="255"
                              placeholder="~/songFiles/bensound-adventure.mp3" />
                 <span class="pm-hint">
@@ -78,11 +78,11 @@
         <div class="pm-modal">
             <h2>Editar canción #<%= EditSong.IdSong %></h2>
             <div class="pm-field">
-                <label for="<%= txtName.ClientID %>">Nombre <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtName.ClientID %>">Nombre <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtName" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
-                <label for="<%= txtPath.ClientID %>">Ruta del archivo <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtPath.ClientID %>">Ruta del archivo <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtPath" runat="server" CssClass="pm-input" MaxLength="255" />
             </div>
             <div class="pm-field">

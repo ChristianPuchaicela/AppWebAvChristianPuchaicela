@@ -10,7 +10,7 @@
 <form id="logoutForm" runat="server">
     <div class="pm-auth">
         <div class="pm-auth-card" style="text-align:center;">
-            <p style="color:#C9B29A;margin:0;">Cerrando sesión…</p>
+            <p style="color:#D3AFB8;margin:0;">Cerrando sesión…</p>
         </div>
     </div>
 </form>

@@ -58,7 +58,7 @@
         <div class="pm-modal">
             <h2>Nueva playlist</h2>
             <div class="pm-field">
-                <label for="<%= txtNewTitle.ClientID %>">Título <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewTitle.ClientID %>">Título <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewTitle" runat="server" CssClass="pm-input" MaxLength="50"
                              placeholder="Mi playlist" />
             </div>

@@ -52,11 +52,11 @@
         <div class="pm-modal">
             <h2>Nueva playlist</h2>
             <div class="pm-field">
-                <label for="<%= ddlNewOwner.ClientID %>">Propietario <span style="color:#D98C74">*</span></label>
+                <label for="<%= ddlNewOwner.ClientID %>">Propietario <span style="color:#CB8496">*</span></label>
                 <asp:DropDownList ID="ddlNewOwner" runat="server" CssClass="pm-select" />
             </div>
             <div class="pm-field">
-                <label for="<%= txtNewTitle.ClientID %>">Título <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewTitle.ClientID %>">Título <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewTitle" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
@@ -81,12 +81,12 @@
         <div class="pm-modal">
             <h2>Editar playlist #<%= EditPlaylist.IdPlaylist %></h2>
             <div class="pm-field">
-                <label for="<%= ddlOwner.ClientID %>">Propietario <span style="color:#D98C74">*</span></label>
+                <label for="<%= ddlOwner.ClientID %>">Propietario <span style="color:#CB8496">*</span></label>
                 <asp:DropDownList ID="ddlOwner" runat="server" CssClass="pm-select" />
                 <span class="pm-hint">Cambiar el propietario transfiere la playlist a otro usuario.</span>
             </div>
             <div class="pm-field">
-                <label for="<%= txtTitle.ClientID %>">Título <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtTitle.ClientID %>">Título <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtTitle" runat="server" CssClass="pm-input" MaxLength="50" />
             </div>
             <div class="pm-field">
@@ -103,7 +103,7 @@
             <% if (EditSongs.Count == 0) { %>
                 <div class="pm-empty-sm">Esta playlist no tiene canciones.</div>
             <% } else { %>
-                <ul style="margin:0 0 18px;padding-left:20px;color:#C9B29A;font-size:0.87rem;">
+                <ul style="margin:0 0 18px;padding-left:20px;color:#D3AFB8;font-size:0.87rem;">
                     <% foreach (var s in EditSongs) { %>
                     <li><%= H(s.SongName) %></li>
                     <% } %>

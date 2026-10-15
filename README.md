@@ -1,7 +1,7 @@
 # PoliMusic — Aplicación web tipo Spotify
 
 Clon funcional de reproductor de música construido con **ASP.NET Web Forms clásico
-(.NET Framework 4.8)**, C#, ADO.NET y **SQL Server**, con identidad visual marrón.
+(.NET Framework 4.8)**, C#, ADO.NET y **SQL Server**, con identidad visual vino (concha de vino).
 
 > Los hechos de este README están verificados ejecutando la aplicación, no inferidos.
 > Al final se documenta con precisión qué se probó realmente y qué queda pendiente.
@@ -141,21 +141,27 @@ Si abre la solución en Visual Studio, el flujo de compilación normal también 
 |---|---|---|---|---|
 | `userAdmin` | Administrador | 1 | `12345678` | `BDD_PoliMusic.sql` (INSERT original) |
 | `userNormal` | Usuario | 0 | `12345678` | `BDD_PoliMusic.sql` (INSERT original) |
-| `Christian.Puchaicela` | Administrador | 1 | *no determinada* | Datos existentes en `TBL_USER` |
+| `Christian.Puchaicela` | Administrador | 1 | `12345678` | Contraseña **asignada** (ver nota) |
 
-Las contraseñas de `userAdmin` y `userNormal` provienen de los `INSERT` de
-`BDD_PoliMusic.sql` y fueron **comprobadas con un inicio de sesión real** contra
-la base de datos en ejecución (ver §11):
+Las tres cuentas fueron **comprobadas con un inicio de sesión real** contra la
+base de datos en ejecución:
 
 * `userAdmin` / `12345678` → redirige a `/Admin/Default.aspx` y muestra el panel real.
 * `userNormal` / `12345678` → redirige a `/Default.aspx`; `/Admin/*` responde **403**.
+* `Christian.Puchaicela` / `12345678` → redirige a `/Admin/Default.aspx`; puede abrir
+  `/Admin/Usuarios.aspx` y ver la lista de usuarios.
 * `userAdmin` / contraseña incorrecta → permanece en `/Login.aspx` con el aviso
   *«Usuario o contrasena incorrectos.»*
 
-> **`Christian.Puchaicela` conserva un hash SHA-1 heredado** (`7C222FB292…`, 40
-> caracteres). No se modificó: el sistema migra ese hash a PBKDF2 automáticamente
-> en su primer inicio de sesión correcto. Su contraseña no forma parte de
-> `BDD_PoliMusic.sql`, por lo que no se afirma ninguna.
+> **Nota sobre `Christian.Puchaicela`.** Su contraseña **original no estaba
+> documentada en ningún archivo** (la base traía un hash SHA-1 heredado,
+> `7C222FB292…`, sin texto de origen). Para permitir el acceso se le **asignó**
+> la contraseña `12345678` y se re-cifró con **PBKDF2** (`PBH1$…`).
+> El valor anterior era `7C222FB2927D828AF22F592134E8932480637C0D`; consérvelo si
+> necesitara revertir el cambio.
+>
+> Este cambio se aplicó solo sobre la base de datos en ejecución, **no** sobre
+> `BDD_PoliMusic.sql`, que sigue intacto.
 
 * El sistema conserva compatibilidad con contraseñas heredadas en **texto plano**
   y **SHA-1**, y las migra transparentemente a PBKDF2 en el primer inicio de sesión
@@ -320,7 +326,7 @@ formulario de `Login.aspx` con `txtLogin`, `txtPassword` y `btnLogin`:
 | Registro de cuenta nueva | `302 → /Login.aspx?msg=registered`; fila creada con **`USER_TYPE = 0`** |
 | Contraseña almacenada | **PBKDF2** (`PBH1$...`, 46 caracteres), no texto plano |
 | Migración de hash heredado | `userNormal` y `userAdmin` pasaron a `PBH1$...` al iniciar sesión |
-| `Christian.Puchaicela` | Conserva SHA-1 (`7C222FB292…`) hasta su primer login correcto |
+| `Christian.Puchaicela` | Contraseña asignada y re-cifrada a PBKDF2 (`PBH1$…`) |
 | Cierre de sesión | `302 → /Login.aspx?msg=logout` |
 | Reutilizar la sesión tras cerrar | **Bloqueado**: todas las páginas protegidas → Login |
 
@@ -455,7 +461,7 @@ AppWebAvChristianPuchaicela/
    │  ├─ Data/    Db, UserRepository, SongRepository, ArtistRepository,
    │  │           AlbumRepository, PlaylistRepository, CatalogRepository
    │  └─ Services/ AuthService, PasswordHasher, UserContext, MediaResolver
-   ├─ Content/Site.css                    ← identidad visual marrón
+   ├─ Content/Site.css                    ← identidad visual vino
    ├─ Scripts/pollmusic.js                ← reproductor persistente
    ├─ Assets/                             ← audio, imágenes
    └─ run/                                ← launcher de IIS Express
@@ -470,16 +476,24 @@ Sin dependencias NuGet.
 
 ## 9. Identidad visual
 
-Paleta exacta solicitada, definida como variables CSS en `Content\Site.css`:
+Paleta **vino (concha de vino)**, definida como variables CSS en `Content\Site.css`:
 
 | Variable | Valor | Uso |
 |---|---|---|
-| `--brown-deep` | `#2B1D17` | Fondos profundos |
-| `--brown-main` | `#6F4E37` | Color principal |
-| `--brown-mid` | `#8B5E3C` | Superficies intermedias |
-| `--brown-light` | `#B08968` | Acentos y bordes |
-| `--cream` | `#F5EBDD` | Texto sobre fondo oscuro |
-| `--charcoal` | `#191513` | Texto principal |
+| `--wine-deep` | `#1E0A11` | Fondos profundos |
+| `--wine-main` | `#5C1A2B` | Color principal |
+| `--wine-mid` | `#7B2338` | Superficies intermedias |
+| `--wine-light` | `#C06A80` | Acentos y bordes |
+| `--cream` | `#F3E4E7` | Texto sobre fondo oscuro |
+| `--charcoal` | `#140509` | Superficies y texto principal |
+
+> Se conservan los alias `--brown-*` apuntando a los mismos tonos vino, para no
+> romper ninguna regla existente que los utilice.
+
+**Contraste verificado (WCAG 2.1).** Todos los pares texto/fondo cumplen **AA**
+(≥ 4.5) en texto normal; el texto principal alcanza **AAA** (16.17:1). El acento
+se ajustó a `#C06A80` precisamente para superar AA tanto como color de enlace
+sobre el fondo (5.32:1) como fondo de botón con texto oscuro encima (5.32:1).
 
 Barra lateral de navegación, tarjetas, tablas, reproductor inferior persistente,
 diseño adaptable (puntos de quiebre en 900 px y 720 px) y estados hover.
@@ -533,9 +547,14 @@ Se documenta con motivos concretos, sin ocultar nada.
    pestaña, pero no se sincroniza entre dispositivos ni sesiones. Es el comportamiento
    previsto.
 
-7. **`Christian.Puchaicela` conserva su hash SHA-1.**
-   Se migrará a PBKDF2 automáticamente la primera vez que esa cuenta inicie sesión.
-   No se modificó su fila para no alterar datos existentes sin autorización.
+7. **`Christian.Puchaicela` tiene contraseña asignada.**
+   La base traía un hash SHA-1 heredado cuya contraseña no estaba documentada en
+   ningún archivo, por lo que era imposible iniciar sesión con esa cuenta. A
+   petición del usuario se le asignó `12345678` y se re-cifró con PBKDF2
+   (`PBH1$91ed0001664f0b4e$1e524e645ecad30d96976447`).
+   El hash anterior (`7C222FB2927D828AF22F592134E8932480637C0D`) queda documentado
+   por si se necesitara revertir. El cambio se aplicó solo a la base en ejecución;
+   `BDD_PoliMusic.sql` permanece intacto.
 
 ---
 
@@ -573,7 +592,7 @@ Se documenta con motivos concretos, sin ocultar nada.
 | Contraseñas con hash + salt | Cumplido (PBKDF2) |
 | El registro asigna siempre el rol Usuario | Cumplido y verificado |
 | Pantalla principal con datos reales y estados vacíos | Cumplido |
-| Paleta marrón exacta, diseño adaptable | Cumplido |
+| Paleta vino (concha de vino), diseño adaptable | Cumplido |
 | Reproductor HTML5 funcional | Cumplido (archivos válidos verificados) |
 | Consultas parametrizadas | Cumplido y verificado |
 | `README` con instrucciones, permisos, pruebas reales y pendientes | Este documento |

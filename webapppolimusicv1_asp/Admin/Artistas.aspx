@@ -46,7 +46,7 @@
         <div class="pm-modal">
             <h2>Nuevo artista</h2>
             <div class="pm-field">
-                <label for="<%= txtNewName.ClientID %>">Nombre <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtNewName.ClientID %>">Nombre <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtNewName" runat="server" CssClass="pm-input" MaxLength="100" />
             </div>
             <div class="pm-field">
@@ -71,7 +71,7 @@
         <div class="pm-modal">
             <h2>Editar artista #<%= EditArtist.IdArtist %></h2>
             <div class="pm-field">
-                <label for="<%= txtName.ClientID %>">Nombre <span style="color:#D98C74">*</span></label>
+                <label for="<%= txtName.ClientID %>">Nombre <span style="color:#CB8496">*</span></label>
                 <asp:TextBox ID="txtName" runat="server" CssClass="pm-input" MaxLength="100" />
             </div>
             <div class="pm-field">

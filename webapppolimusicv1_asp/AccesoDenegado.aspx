@@ -13,7 +13,7 @@
         <div class="pm-auth-card" style="text-align:center;max-width:460px;">
             <h1>403</h1>
             <h2 style="font-size:1.15rem;">Acceso denegado</h2>
-            <p style="color:#9C8571;font-size:0.88rem;">
+            <p style="color:#A9808B;font-size:0.88rem;">
                 Su cuenta no tiene el rol necesario para ver esta sección.
                 Las secciones de administración requieren el rol de administrador.
             </p>
