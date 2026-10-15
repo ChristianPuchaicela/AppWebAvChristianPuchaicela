@@ -1,0 +1,52 @@
+# ============================================================
+#  PoliMusic - Archivos que NO deben subirse al repositorio
+# ============================================================
+
+# --- Secretos: NUNCA versionar ---
+# Contiene la cadena de conexion con usuario y contrasena reales.
+# La plantilla Web.secrets.config.example SI se versiona.
+Web.secrets.config
+
+# --- Compilacion de Visual Studio / MSBuild ---
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.dll
+*.pdb
+*.exe
+*.cache
+
+# --- Archivos temporales del compilador dinamico de ASP.NET ---
+# (se regeneran solos en el primer acceso al sitio)
+[Tt]emp/
+*.compiled
+App_Data/*.ldf
+App_Data/*.mdf
+
+# --- Entorno de IIS Express generado localmente ---
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# --- Resultados de pruebas ---
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# --- Sistema operativo ---
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# --- Editores ---
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- Logs ---
+*.log

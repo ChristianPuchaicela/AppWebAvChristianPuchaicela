@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{8A3F2B10-4C7E-4D91-B0A2-6E5C71D93F44}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>WebAppPoliMusicV1</RootNamespace>
+    <AssemblyName>WebAppPoliMusicV1</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Content\Site.css" />
+    <Content Include="Scripts\pollmusic.js" />
+    <Content Include="Site.master" />
+    <Content Include="Default.aspx" />
+    <Content Include="Login.aspx" />
+    <Content Include="Registro.aspx" />
+    <Content Include="Logout.aspx" />
+    <Content Include="Canciones.aspx" />
+    <Content Include="Artistas.aspx" />
+    <Content Include="Albumes.aspx" />
+    <Content Include="Playlists.aspx" />
+    <Content Include="PlaylistDetalle.aspx" />
+    <Content Include="Perfil.aspx" />
+    <Content Include="Play.aspx" />
+    <Content Include="Error.aspx" />
+    <Content Include="AccesoDenegado.aspx" />
+    <Content Include="Admin\Usuarios.aspx" />
+    <Content Include="Admin\Canciones.aspx" />
+    <Content Include="Admin\Artistas.aspx" />
+    <Content Include="Admin\Albumes.aspx" />
+    <Content Include="Admin\Playlists.aspx" />
+    <Content Include="Admin\Default.aspx" />
+    <Content Include="Web.config" />
+    <Content Include="Global.asax" />
+    <Content Include="packages.config" />
+    <Content Include="run\applicationhost.config" />
+    <Content Include="run\iniciar-polimusic.bat" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Site.master.cs">
+      <DependentUpon>Site.master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Default.aspx.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Login.aspx.cs">
+      <DependentUpon>Login.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Registro.aspx.cs">
+      <DependentUpon>Registro.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Logout.aspx.cs">
+      <DependentUpon>Logout.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Canciones.aspx.cs">
+      <DependentUpon>Canciones.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Artistas.aspx.cs">
+      <DependentUpon>Artistas.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Albumes.aspx.cs">
+      <DependentUpon>Albumes.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Playlists.aspx.cs">
+      <DependentUpon>Playlists.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PlaylistDetalle.aspx.cs">
+      <DependentUpon>PlaylistDetalle.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Perfil.aspx.cs">
+      <Dependent Upon>Perfil.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Play.aspx.cs">
+      <DependentUpon>Play.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Error.aspx.cs">
+      <DependentUpon>Error.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AccesoDenegado.aspx.cs">
+      <DependentUpon>AccesoDenegado.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Default.aspx.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Usuarios.aspx.cs">
+      <DependentUpon>Usuarios.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Canciones.aspx.cs">
+      <DependentUpon>Canciones.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Artistas.aspx.cs">
+      <DependentUpon>Artistas.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Albumes.aspx.cs">
+      <DependentUpon>Albumes.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Playlists.aspx.cs">
+      <DependentUpon>Playlists.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="App_Code\Models\Album.cs" />
+    <Compile Include="App_Code\Models\Artist.cs" />
+    <Compile Include="App_Code\Models\CatalogItem.cs" />
+    <Compile Include="App_Code\Models\Playlist.cs" />
+    <Compile Include="App_Code\Models\Song.cs" />
+    <Compile Include="App_Code\Models\User.cs" />
+    <Compile Include="App_Code\Data\Db.cs" />
+    <Compile Include="App_Code\Data\UserRepository.cs" />
+    <Compile Include="App_Code\Data\SongRepository.cs" />
+    <Compile Include="App_Code\Data\ArtistRepository.cs" />
+    <Compile Include="App_Code\Data\AlbumRepository.cs" />
+    <Compile Include="App_Code\Data\PlaylistRepository.cs" />
+    <Compile Include="App_Code\Data\CatalogRepository.cs" />
+    <Compile Include="App_Code\Services\PasswordHasher.cs" />
+    <Compile Include="App_Code\Services\AuthService.cs" />
+    <Compile Include="App_Code\Services\MediaResolver.cs" />
+    <Compile Include="App_Code\Services\UserContext.cs" />
+    <Compile Include="App_Code\Common\BasePage.cs" />
+    <Compile Include="App_Code\Common\Ui.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\" />
+    <Folder Include="Assets\" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>44310</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:44310/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
