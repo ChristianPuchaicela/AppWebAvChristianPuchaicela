@@ -1,0 +1,177 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="WebAppPoliMusicV2.SiteMaster" %>
+<!DOCTYPE html>
+<html lang="es">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0E0409" />
+    <title><asp:ContentPlaceHolder ID="TitleContent" runat="server">PoliMusic</asp:ContentPlaceHolder></title>
+    <link rel="stylesheet" href="<%= ResolveUrl("~/Content/Site.css") %>" />
+    <script>
+        window.pmBase = '<%= ResolveUrl("~/") %>';
+        window.pmToken = '<%= CsrfToken %>';
+    </script>
+</head>
+<body>
+<form id="pmForm" runat="server" enctype="multipart/form-data">
+    <div class="pm-shell">
+
+        <aside class="pm-sidebar">
+            <a class="pm-brand" href="<%= ResolveUrl("~/Default.aspx") %>">
+                <span class="pm-brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FDF4F6" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M9 18V5l10-2v13" />
+                        <circle cx="6" cy="18" r="3" fill="#FDF4F6" stroke="none" />
+                        <circle cx="16" cy="16" r="3" fill="#FDF4F6" stroke="none" />
+                    </svg>
+                </span>
+                <span class="pm-brand-text">
+                    <span class="pm-brand-name">PoliMusic</span>
+                    <span class="pm-brand-sub">Streaming</span>
+                </span>
+            </a>
+
+            <nav class="pm-nav" aria-label="Navegacion principal">
+                <span class="pm-nav-label">Explorar</span>
+                <a href="<%= ResolveUrl("~/Default.aspx") %>" class="<%= NavClass("home") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+                    Inicio
+                </a>
+                <a href="<%= ResolveUrl("~/Canciones.aspx") %>" class="<%= NavClass("songs") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg>
+                    Canciones
+                </a>
+                <a href="<%= ResolveUrl("~/Artistas.aspx") %>" class="<%= NavClass("artists") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+                    Artistas
+                </a>
+                <a href="<%= ResolveUrl("~/Albumes.aspx") %>" class="<%= NavClass("albums") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>
+                    &Aacute;lbumes
+                </a>
+
+                <span class="pm-nav-label">Mi m&uacute;sica</span>
+                <a href="<%= ResolveUrl("~/Playlists.aspx") %>" class="<%= NavClass("playlists") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h11M4 12h11M4 18h7"/><circle cx="18" cy="16" r="3"/><path d="M21 16V7l-4 1"/></svg>
+                    Playlists
+                </a>
+                <a href="<%= ResolveUrl("~/Perfil.aspx") %>" class="<%= NavClass("profile") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+                    Mi perfil
+                </a>
+
+                <% if (IsAdmin) { %>
+                <span class="pm-nav-label">Administraci&oacute;n</span>
+                <a href="<%= ResolveUrl("~/Admin/Default.aspx") %>" class="<%= NavClass("admin") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+                    Panel
+                </a>
+                <a href="<%= ResolveUrl("~/Admin/Usuarios.aspx") %>" class="<%= NavClass("admin-users") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M17 4.5a3.5 3.5 0 010 7"/><path d="M18 13.2c2.4.6 4 2.7 4 5.3"/></svg>
+                    Usuarios
+                </a>
+                <a href="<%= ResolveUrl("~/Admin/Canciones.aspx") %>" class="<%= NavClass("admin-songs") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
+                    Canciones
+                </a>
+                <a href="<%= ResolveUrl("~/Admin/Artistas.aspx") %>" class="<%= NavClass("admin-artists") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+                    Artistas
+                </a>
+                <a href="<%= ResolveUrl("~/Admin/Albumes.aspx") %>" class="<%= NavClass("admin-albums") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/></svg>
+                    &Aacute;lbumes
+                </a>
+                <a href="<%= ResolveUrl("~/Admin/Playlists.aspx") %>" class="<%= NavClass("admin-playlists") %>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h11M4 12h11M4 18h7"/><circle cx="18" cy="16" r="3"/></svg>
+                    Playlists
+                </a>
+                <% } %>
+            </nav>
+
+            <div class="pm-sidebar-foot">
+                Proyecto acad&eacute;mico &middot; EPN<br />
+                Aplicaciones Web Avanzadas
+            </div>
+        </aside>
+
+        <div class="pm-main">
+            <header class="pm-topbar">
+                <div class="pm-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M20 20l-3.5-3.5" />
+                    </svg>
+                    <input type="text" id="pmSearchInput" placeholder="Buscar canciones&hellip;"
+                           value="<%= H(SearchValue) %>" aria-label="Buscar canciones" />
+                </div>
+
+                <div class="pm-topbar-actions">
+                    <a class="pm-user" href="<%= ResolveUrl("~/Perfil.aspx") %>" title="Mi perfil">
+                        <span class="pm-user-meta">
+                            <span class="pm-user-name"><%= H(CurrentUsername) %></span>
+                            <span class="pm-user-role"><%= CurrentRole %></span>
+                        </span>
+                        <% if (!string.IsNullOrEmpty(CurrentPhotoUrl)) { %>
+                        <img class="pm-avatar" src="<%= Url(CurrentPhotoUrl) %>" alt="Foto de perfil" />
+                        <% } else { %>
+                        <span class="pm-avatar-fallback"><%= H(Initials) %></span>
+                        <% } %>
+                    </a>
+                    <a class="pm-btn pm-btn-ghost pm-btn-sm" href="<%= ResolveUrl("~/Logout.aspx") %>">Cerrar sesi&oacute;n</a>
+                </div>
+            </header>
+
+            <main class="pm-content">
+                <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+            </main>
+        </div>
+    </div>
+
+    <!-- Barra de reproduccion persistente -->
+    <div class="pm-player" id="pmPlayer">
+        <div class="pm-player-info">
+            <div class="pm-player-art" id="pmPlayerArt"><span class="pm-art-initials">&#9834;</span></div>
+            <div class="pm-player-meta">
+                <div class="pm-player-title" id="pmPlayerTitle">Sin reproducci&oacute;n</div>
+                <div class="pm-player-artist" id="pmPlayerArtist">PoliMusic</div>
+            </div>
+        </div>
+
+        <div class="pm-player-center">
+            <div class="pm-player-controls">
+                <button type="button" class="pm-ctrl" id="pmPrev" aria-label="Anterior">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 6h2v12H7zM19 6l-9 6 9 6z"/></svg>
+                </button>
+                <button type="button" class="pm-ctrl pm-ctrl-main" id="pmPlayPause" aria-label="Reproducir">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button type="button" class="pm-ctrl" id="pmNext" aria-label="Siguiente">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15 6h2v12h-2zM5 6l9 6-9 6z"/></svg>
+                </button>
+            </div>
+            <div class="pm-player-track">
+                <span class="pm-time" id="pmTimeCurrent">0:00</span>
+                <div class="pm-progress" id="pmProgress" role="slider" aria-label="Progreso de la cancion">
+                    <div class="pm-progress-fill" id="pmProgressFill"></div>
+                </div>
+                <span class="pm-time right" id="pmTimeTotal">0:00</span>
+            </div>
+        </div>
+
+        <div class="pm-player-right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                <path d="M15.5 8.5a5 5 0 010 7" />
+            </svg>
+            <div class="pm-volume" id="pmVolume" role="slider" aria-label="Volumen">
+                <div class="pm-volume-fill" id="pmVolumeFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pm-toast" id="pmToast" role="status" aria-live="polite"></div>
+</form>
+<script src="<%= ResolveUrl("~/Scripts/pollmusic.js") %>"></script>
+</body>
+</html>

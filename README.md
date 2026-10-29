@@ -1,600 +1,517 @@
-# PoliMusic — Aplicación web tipo Spotify
+# PoliMusic — Reproductor de música web (ASP.NET Web Forms, .NET Framework 4.8)
 
-Clon funcional de reproductor de música construido con **ASP.NET Web Forms clásico
-(.NET Framework 4.8)**, C#, ADO.NET y **SQL Server**, con identidad visual vino (concha de vino).
+Aplicación web tipo Spotify construida con **ASP.NET Web Forms clásico**, C#, ADO.NET y
+**SQL Server**, con arquitectura en tres capas y una identidad visual vino/rosa.
 
-> Los hechos de este README están verificados ejecutando la aplicación, no inferidos.
-> Al final se documenta con precisión qué se probó realmente y qué queda pendiente.
+El repositorio contiene **dos proyectos**:
+
+| Carpeta | Tipo de proyecto | Estado |
+|---|---|---|
+| `webapppolimusicv1_asp/` | *Web Site* (sin `.csproj`, con `App_Code`, `CodeFile=`) | Versión anterior, se conserva como referencia |
+| `SlnAppPoliMusic/WebAppPoliMusicV2/` | **Web Application Project** (`BLL`/`DAL`/`Entities`, code-behind con `.designer.cs`) | **Versión actual — usar esta** |
 
 ---
 
-## 1. Cómo ejecutar la aplicación
+## Índice
 
-### Requisitos
+1. [Requisitos](#1-requisitos)
+2. [Puesta en marcha](#2-puesta-en-marcha)
+3. [Estructura del repositorio](#3-estructura-del-repositorio)
+4. [Arquitectura de la solución V2](#4-arquitectura-de-la-solución-v2)
+5. [Inventario de páginas](#5-inventario-de-páginas)
+6. [Modelo de datos](#6-modelo-de-datos)
+7. [Sistema de diseño](#7-sistema-de-diseño)
+8. [Seguridad](#8-seguridad)
+9. [Errores corregidos respecto a la versión anterior](#9-errores-corregidos-respecto-a-la-versión-anterior)
+10. [Estado de verificación](#10-estado-de-verificación)
+11. [Tareas pendientes conocidas](#11-tareas-pendientes-conocidas)
+
+---
+
+## 1. Requisitos
 
 | Componente | Versión / nota |
 |---|---|
 | Windows | 10 / 11 / Server |
+| Visual Studio | 2019 o 2022, con la carga de trabajo **ASP.NET y desarrollo web** |
 | .NET Framework | 4.8 (Runtime + Developer Pack) |
-| SQL Server | 2019 / 2022 / 2025 (probado en SQL Server 2025, instancia `MSSQL17.MSSQLSERVER`) |
-| IIS Express | 10.0 — `C:\Program Files\IIS Express\iisexpress.exe` |
+| SQL Server | 2019 / 2022 / 2025 — instancia accesible como `localhost` |
 | Navegador | Chrome / Edge / Firefox con soporte de `<audio>` |
 
-No hay dependencias NuGet (`packages.config` está vacío). Todo usa ensamblados del GAC.
+No hay dependencias NuGet. Todo se resuelve con ensamblados del GAC
+(`System`, `System.Core`, `System.Data`, `System.Web`, `System.Web.Extensions`,
+`System.Configuration`, `System.Drawing`, `System.Xml`).
 
-### Paso 1 — Preparar la base de datos
+---
 
-La base **`BDD_PoliMusic`** debe existir. El script original de la cátedra se conserva
-sin modificar en `BDD_PoliMusic.sql`. Si necesita crearla de cero, ejecute ese script.
+## 2. Puesta en marcha
 
-Opcional (no destructivo) — normaliza 3 rutas de imagen mal escritas y reinicia `PLAYS`:
+### Paso 1 — Crear la base de datos
 
-```
-sqlcmd -S localhost,1433 -U SU_USUARIO -P SU_CONTRASENA -C -i db\01_PoliMusic_incremental.sql
-```
+La base **`BDD_PoliMusic`** ya existe en el entorno de la cátedra y **no debe
+modificarse su estructura**. El script original se conserva intacto en
+`BDD_PoliMusic.sql` (codificación UTF-16LE) y crea las 9 tablas y los datos de
+prueba.
 
-El script es **idempotente**: puede ejecutarse varias veces sin duplicar datos.
-
-### Paso 2 — Configurar las credenciales (no versionadas)
-
-**La cadena de conexión no está en `Web.config`.** Sus credenciales viven en
-`Web.secrets.config`, un archivo **local excluido del control de versiones** por
-`.gitignore`, de modo que el repositorio nunca publica el usuario ni la contraseña
-de la base de datos.
-
-`Web.config` solo la referencia:
-
-```xml
-<connectionStrings configSource="Web.secrets.config" />
-```
-
-Para configurar su entorno, copie la plantilla y ajuste los valores:
+Si necesita recrearla desde cero:
 
 ```bat
-copy webapppolimusicv1_asp\Web.secrets.config.example webapppolimusicv1_asp\Web.secrets.config
+sqlcmd -S localhost -U SA -P SU_CLAVE -C -i BDD_PoliMusic.sql
 ```
 
-El contenido de su `Web.secrets.config` quedará así (con **sus** datos):
+**Opcional, no destructivo.** `db/01_PoliMusic_incremental.sql` corrige
+incoherencias de *datos* (no de esquema) que rompían la aplicación:
+normaliza el uso de mayúsculas en `TBL_PLAYLIST.PHOTO` y deja una cuenta con
+contraseña ya cifrada. Es **idempotente**, se puede ejecutar varias veces:
+
+```bat
+sqlcmd -S localhost -U SA -P SU_CLAVE -C -i db\01_PoliMusic_incremental.sql
+```
+
+### Paso 2 — Revisar la cadena de conexión
+
+A diferencia de la v1 —que la escondía en `Web.secrets.config`—, en la V2 la
+cadena vive directamente en **`SlnAppPoliMusic/WebAppPoliMusicV2/Web.config`**
+con el mismo nombre que ya usaba el proyecto original:
 
 ```xml
 <connectionStrings>
-  <add name="PoliMusicConnection"
-       connectionString="Server=localhost,1433;Database=BDD_PoliMusic;
-                         User Id=SU_USUARIO;Password=SU_CONTRASENA;
-                         Encrypt=true;TrustServerCertificate=true;
-                         MultipleActiveResultSets=true"
+  <add name="BDD_PoliMusicConnectionString"
+       connectionString="Data Source=localhost;Initial Catalog=BDD_PoliMusic;User ID=usr_polimusic;Password=Politecnica1"
        providerName="System.Data.SqlClient" />
 </connectionStrings>
 ```
 
-> **Formato obligatorio:** la raíz del archivo debe ser `<connectionStrings>`
-> **sin** envolverlo en `<configuration>`. Si se envuelve, ASP.NET falla con
-> *«El formato de un archivo configSource debe ser un elemento que contenga el
-> nombre de la sección»*.
->
-> **El sitio no arranca si falta `Web.secrets.config`.** Si acaba de clonar el
-> repositorio, este es el primer paso obligatorio.
+Si su instancia usa otro servidor, puerto o credenciales, **cambie solo el
+atributo `connectionString`**. Ninguna otra parte del código conoce la
+contraseña: todo pasa por `DAL/Db.cs`.
 
-Ajuste `Server` si su instancia tiene otro nombre o puerto.
+> Si prefiere no versionar el secreto, mueva ese bloque a un archivo aparte y
+> use `<connectionStrings configSource="Web.secrets.config" />`. El código no
+> cambia porque siempre lee por nombre (`Db.ConnectionString`).
 
-### Paso 3 — Ejecutar el sitio
-
-**Opción A — script incluido (recomendado, no requiere compilar):**
+### Paso 3 — Abrir y ejecutar
 
 ```
-webapppolimusicv1_asp\run\iniciar-polimusic.bat
+SlnAppPoliMusic\SlnAppPoliMusic.slnx
 ```
 
-El script **abre el navegador automáticamente** y deja el sitio en primer plano
-(pulse `Ctrl+C` o cierre la ventana para detenerlo). Si el sitio ya estaba en
-ejecución, **no intenta arrancar una segunda instancia**: lo detecta y muestra un
-aviso con la dirección y las cuentas, en lugar de fallar con `0x800700b7`.
+Establezca `WebAppPoliMusicV2` como proyecto de inicio y ejecute con **IIS
+Express** (F5). La página de arranque es `Default.aspx`.
 
-Para detenerlo cuando no tiene la ventana a mano:
+También puede publicar en IIS local: la aplicación usa `System.WebServer`, así
+que funciona igual en el módulo integrado.
 
-```
-webapppolimusicv1_asp\run\iniciar-polimusic.bat stop
-```
+### Cuentas de prueba (vienen en `BDD_PoliMusic.sql`)
 
-Ese comando termina los procesos `iisexpress.exe`, espera a que HTTP.sys libere
-el puerto 8090 y confirma el resultado. Después puede volver a arrancar con normalidad.
-
-Luego abra en el navegador:
-
-```
-http://localhost:8090/
-```
-
-> **Importante:** use exactamente `localhost`, **no** `127.0.0.1`. IIS Express solo
-> acepta el nombre de host con el que registra el sitio; con `127.0.0.1` responde
-> `HTTP 400 Bad Request - Invalid Hostname`.
->
-> **No use un proxy HTTP** para acceder. Si su entorno define `HTTP_PROXY`, añada
-> `localhost` a las exclusiones (o use `--noproxy '*'` con `curl`).
-
-**Opción B — Visual Studio:** abra `PoliMusic.sln` y pulse **Ctrl+F5**.
-El proyecto arranca en IIS Express y compila el ensamblado en `bin\`.
-
-**Opción C — línea de comandos:**
-
-```
-"C:\Program Files\IIS Express\iisexpress.exe" /config:"...\webapppolimusicv1_asp\run\applicationhost.config"
-```
-
-### Sobre el modelo de compilación (importante)
-
-El sitio está preparado para funcionar **sin `bin\`** (sin compilación previa):
-ASP.NET compila el código dinámicamente en el primer acceso.
-
-* Todo el código compartido está en **`App_Code\`** (`Models`, `Data`, `Services`, `Common`).
-* Las páginas usan **`CodeFile=`** (no `CodeBehind=`), que es el modelo *Web Site*.
-* La primera petición tarda unos segundos mientras se compila; las siguientes son inmediatas.
-
-Esto permite ejecutar y calificar el proyecto con solo IIS Express instalado.
-Si abre la solución en Visual Studio, el flujo de compilación normal también es válido.
-
----
-
-## 2. Cuentas verificadas
-
-| Usuario | Rol | `USER_TYPE` | Contraseña | Origen |
-|---|---|---|---|---|
-| `userAdmin` | Administrador | 1 | `12345678` | `BDD_PoliMusic.sql` (INSERT original) |
-| `userNormal` | Usuario | 0 | `12345678` | `BDD_PoliMusic.sql` (INSERT original) |
-| `Christian.Puchaicela` | Administrador | 1 | `12345678` | Contraseña **asignada** (ver nota) |
-
-Las tres cuentas fueron **comprobadas con un inicio de sesión real** contra la
-base de datos en ejecución:
-
-* `userAdmin` / `12345678` → redirige a `/Admin/Default.aspx` y muestra el panel real.
-* `userNormal` / `12345678` → redirige a `/Default.aspx`; `/Admin/*` responde **403**.
-* `Christian.Puchaicela` / `12345678` → redirige a `/Admin/Default.aspx`; puede abrir
-  `/Admin/Usuarios.aspx` y ver la lista de usuarios.
-* `userAdmin` / contraseña incorrecta → permanece en `/Login.aspx` con el aviso
-  *«Usuario o contrasena incorrectos.»*
-
-> **Nota sobre `Christian.Puchaicela`.** Su contraseña **original no estaba
-> documentada en ningún archivo** (la base traía un hash SHA-1 heredado,
-> `7C222FB292…`, sin texto de origen). Para permitir el acceso se le **asignó**
-> la contraseña `12345678` y se re-cifró con **PBKDF2** (`PBH1$…`).
-> El valor anterior era `7C222FB2927D828AF22F592134E8932480637C0D`; consérvelo si
-> necesitara revertir el cambio.
->
-> Este cambio se aplicó solo sobre la base de datos en ejecución, **no** sobre
-> `BDD_PoliMusic.sql`, que sigue intacto.
-
-* El sistema conserva compatibilidad con contraseñas heredadas en **texto plano**
-  y **SHA-1**, y las migra transparentemente a PBKDF2 en el primer inicio de sesión
-  correcto (ver §4).
-* Para cambiar una contraseña: inicie sesión y use **Mi perfil → Cambiar contraseña**.
-* **Se recomienda cambiar estas contraseñas** antes de cualquier uso real: son las
-  que trae la base de datos de clase y son públicas.
-
-> Nota sobre `epn.dis`: la especificación lo mencionaba como cuenta de usuario
-> normal, pero **no existe en `TBL_USER`** (ni en `BDD_PoliMusic.sql` ni en la base
-> viva). El usuario normal real es `userNormal`. No se creó ninguna cuenta ficticia
-> para «hacer coincidir» la especificación.
-
----
-
-## 3. Mapa de páginas y permisos
-
-Autorización **en el servidor** en cada petición (deny-by-default). Ocultar botones
-en la interfaz es solo cosmético: la comprobación real ocurre antes de procesar la página.
-
-### Páginas públicas (sin sesión)
-
-| Página | Ruta | Descripción |
+| Usuario | Contraseña | Rol |
 |---|---|---|
-| Iniciar sesión | `~/Login.aspx` | Valida usuario/correo contra SQL Server |
-| Registro | `~/Registro.aspx` | Crea cuentas nuevas (siempre rol Usuario) |
-| Error | `~/Error.aspx` | Página genérica de error (404/403/500) |
-| Acceso denegado | `~/AccesoDenegado.aspx` | Respuesta 403 con el rol actual |
+| `userAdmin` | `12345678` | Administrador |
+| `userNormal` | `12345678` | Usuario normal |
+| `username1` | *(SHA-1 heredado)* | Usuario normal |
 
-> `/AccesoDenegado.aspx` responde **403** (no 200): es una página de error legítima,
-> no un recurso normal. Su inclusión entre las públicas solo significa que no exige
-> sesión, para poder informar correctamente al usuario.
+La contraseña `12345678` está almacenada en **texto plano** en el script
+original. La aplicación la acepta y, tras el primer inicio de sesión correcto,
+la **re-cifra automáticamente** con PBKDF2 sin que el usuario note nada.
 
-### Páginas de usuario (sesión requerida)
+### Carpetas de recursos
 
-| Página | Ruta | Puede hacer |
-|---|---|---|
-| Inicio | `~/Default.aspx` | Ver canciones destacadas, álbumes, artistas, sus playlists |
-| Canciones | `~/Canciones.aspx` | Listar, buscar, reproducir, agregar a sus playlists |
-| Artistas | `~/Artistas.aspx` | Listar artistas y ver detalle con su catálogo |
-| Álbumes | `~/Albumes.aspx` | Listar álbumes y ver tracklist |
-| Playlists | `~/Playlists.aspx` | Ver las propias + las públicas; crear playlist |
-| Detalle de playlist | `~/PlaylistDetalle.aspx?id=` | Ver/editar/eliminar **solo si es suya o pública** |
-| Mi perfil | `~/Perfil.aspx` | Editar sus datos y cambiar su contraseña |
-| Cerrar sesión | `~/Logout.aspx` | Invalida la sesión |
-| Reproducción | `~/Play.aspx` | Endpoint JSON que incrementa `PLAYS` (requiere POST + token) |
+La base guarda rutas relativas a la raíz (`~/songFiles/...`,
+`~/ArtistImages/...`). Los archivos deben existir en el proyecto V2:
 
-### Páginas de administración (rol Administrador)
+```
+WebAppPoliMusicV2/
+├── AlbumImages/     ← album1..5.png
+├── ArtistImages/    ← artist1..4.jpg + artist5.png
+├── SongFiles/       ← bensound-adventure|dreams|energy|scifi|tomorrow.mp3
+├── UserImages/      ← default.jpg, root.png, userNormal.png, username1.png
+└── PlaylistImages/  ← default.jpg + playlist1..5.png
+```
 
-| Página | Ruta | CRUD completo sobre |
-|---|---|---|
-| Panel | `~/Admin/Default.aspx` | Métricas generales y usuarios recientes |
-| Usuarios | `~/Admin/Usuarios.aspx` | `TBL_USER` |
-| Canciones | `~/Admin/Canciones.aspx` | `TBL_SONG` + relación álbum/artista |
-| Artistas | `~/Admin/Artistas.aspx` | `TBL_ARTIST` |
-| Álbumes | `~/Admin/Albumes.aspx` | `TBL_ALBUM` + `TBL_TRACKLIST` |
-| Playlists | `~/Admin/Playlists.aspx` | `TBL_PLAYLIST` (incluye transferir propietario) |
-
-Un usuario normal que intente abrir cualquier `~/Admin/*` recibe
-**302 → `AccesoDenegado.aspx?from=...`** (verificado).
+**No hace falta tocar la base de datos para corregir mayúsculas.**
+El script original guarda rutas con capitalización inconsistente
+(`~/userImages/default.jpg`, `~/albumImages/album1.png`,
+`~/ArtistImages/artist1.jpg`, `~/playlistImages/Playlist2.png`) y con
+extensiones mezcladas `.jpg` / `.png`. `Util/MediaResolver.cs` resuelve la ruta
+guardada contra el sistema de archivos real en tres pasos —ruta exacta →
+búsqueda sin distinguir mayúsculas carpeta por carpeta → carpeta por defecto— y
+cachea el resultado en memoria. Así `~/songFiles/bensound-adventure.mp3`
+(minúscula en la BD) encuentra `SongFiles/bensound-adventure.mp3` (mayúscula en
+disco) sin necesidad de un `UPDATE`.
 
 ---
 
-## 4. Autenticación y contraseñas
-
-* Algoritmo propio: **PBKDF2 (HMAC-SHA256)**, 10 000 iteraciones, salt aleatorio de 8 bytes,
-  hash de 12 bytes. Formato almacenado: `PBH1$<saltHex>$<hashHex>` (46 caracteres,
-  cabe en `VARCHAR(50)`).
-* Comparación en **tiempo constante** para evitar ataques de temporización.
-* **Migración progresiva**: al iniciar sesión, si el hash almacenado es texto plano o
-  SHA-1 heredado y la contraseña es correcta, la fila se reescribe automáticamente a PBKDF2.
-* El **registro asigna siempre `USER_TYPE = 0`** (Usuario). El formulario no expone el rol.
-* `Perfil.aspx` conserva explícitamente el `USER_TYPE` actual, de modo que el usuario
-  no puede escalar privilegios editando su propio perfil.
-* Cookies: `HttpOnly`, `SameSite=Lax`; ticket `FormsAuthentication`.
-* **CSRF**: token por sesión (`PM_CSRF`) validado en cada POST; si falta o no coincide,
-  responde `403 {"ok":false,"error":"token-invalido"}` (verificado).
-* **SQL**: todas las consultas usan comandos parametrizados (verificado con ataques
-  de inyección, §7).
-
----
-
-## 5. Modelo de datos (real, tomado de la base existente)
-
-Ocho tablas. No se inventaron estructuras adicionales.
-
-| Tabla | Clave | Notas |
-|---|---|---|
-| `TBL_USER` | `ID_USER` | `USERNAME`, `PASSWORD`, `EMAIL`, `BIRTHDAY`, `USER_PHOTO`, `USER_TYPE` |
-| `TBL_SONG` | `ID_SONG` | `SONG_NAME`, `SONG_PATH`, `PLAYS` |
-| `TBL_ARTIST` | `ID_ARTIST` | `ARTIST_NAME`, `ARTIST_LASTNAME`, `ARTIST_IMAGE` |
-| `TBL_ALBUM` | `ID_ALBUM` | `TITLE_ALBUM`, `RELEASE_YEAR`, `ALBUM_IMAGE_PATH` |
-| `TBL_PLAYLIST` | `ID_PLAYLIST` | `ID_USER`, `TITLE`, `CREATION_DATE`, `TYPE`, `PHOTO` |
-| `TBL_PLAYER` | — | Relación N:M canciones ↔ artistas |
-| `TBL_TRACKLIST` | — | Relación N:M álbumes ↔ canciones |
-| `TBL_PLAYLIST_SONG` | — | Relación N:M playlists ↔ canciones |
-| `TBL_CATALOG` | `ID_CATALOG` | Tabla de dominio autorreferenciada |
-
-**Dominios en `TBL_CATALOG`** (leídos por la aplicación, no duplicados en código):
-
-* `PARENT '1'` → `USER TYPE`: `0` = USER, `1` = ADMIN
-* `PARENT '2'` → `PLAYLIST TYPE`: `0` = Public, `1` = Private
-
-**Claves foráneas** presentes: `FK_TBL_PLAYER_TBL_ARTIST`, `FK_TBL_PLAYER_TBL_SONG`,
-`FK_TBL_PLAYLIST_TBL_USER`, `FK_TBL_PLAYLIST_SONG_TBL_PLAYLIST`,
-`FK_TBL_PLAYLIST_SONG_TBL_SONG`, `FK_TBL_TRACKLIST_TBL_ALBUM`, `FK_TBL_TRACKLIST_TBL_SONG`.
-
-Las eliminaciones que atraviesan varias tablas se hacen **en transacción**.
-
----
-
-## 6. Multimedia (rutas reales)
-
-Las rutas guardadas en la base (`~/songFiles/...`, `~/userImages/...`) se traducen a
-archivos reales bajo `~/Assets/...` mediante `Services\MediaResolver.cs`, que prueba
-variantes de mayúsculas/minúsculas en el nombre de carpeta.
-
-La carpeta `Assets` **debe** existir.
-
-| Subcarpeta | Contenido |
-|---|---|
-| `Assets\SongFiles\` | Archivos `.mp3` |
-| `Assets\UserImages\` | Fotos de usuario |
-| `Assets\PlaylistImages\` | Portadas de playlists |
-| `Assets\AlbumImages\` | Portadas de álbumes |
-| `Assets\ArtistImages\` | Fotos de artistas |
-
-**Regla importante:** si el archivo de audio no existe, la aplicación **no simula** una
-reproducción correcta. La canción se marca como no reproducible y se muestra un aviso
-(`AudioWarning`) en las páginas de catálogo.
-
-El reproductor es un `<audio>` HTML5 real: play/pausa, canción actual, título, artista,
-portada, volumen, barra de progreso, tiempo transcurrido y duración. Su estado sobrevive
-a la navegación entre páginas mediante `sessionStorage`.
-
----
-
-## 7. Pruebas ejecutadas realmente
-
-Todo lo siguiente se ejecutó contra la aplicación en funcionamiento y la base real.
-
-### Compilación y arranque
-
-| Prueba | Resultado |
-|---|---|
-| Compilación de `App_Code` (Modelos, Datos, Servicios, Common) | **Correcta**, sin errores |
-| Compilación dinámica de las 19 páginas `.aspx` | **Correcta**, sin errores ni advertencias |
-| Arranque con IIS Express (`localhost:8090`) | **Escuchando y sirviendo** |
-| `Content\Site.css` | `200`, 27 397 bytes, `text/css` |
-| `Scripts\pollmusic.js` | `200`, 12 716 bytes |
-
-### Autenticación
-
-Inicios de sesión ejecutados con las contraseñas reales de la base (§2), enviando el
-formulario de `Login.aspx` con `txtLogin`, `txtPassword` y `btnLogin`:
-
-| Prueba | Resultado |
-|---|---|
-| `userAdmin` / `12345678` | `302 → /Admin/Default.aspx` (detectó rol Administrador) |
-| `userNormal` / `12345678` | `302 → /Default.aspx` (detectó rol Usuario) |
-| `userAdmin` / contraseña **incorrecta** | Permanece en `/Login.aspx` con el aviso *«Usuario o contrasena incorrectos.»*; **sin sesión** |
-| Registro de cuenta nueva | `302 → /Login.aspx?msg=registered`; fila creada con **`USER_TYPE = 0`** |
-| Contraseña almacenada | **PBKDF2** (`PBH1$...`, 46 caracteres), no texto plano |
-| Migración de hash heredado | `userNormal` y `userAdmin` pasaron a `PBH1$...` al iniciar sesión |
-| `Christian.Puchaicela` | Contraseña asignada y re-cifrada a PBKDF2 (`PBH1$…`) |
-| Cierre de sesión | `302 → /Login.aspx?msg=logout` |
-| Reutilizar la sesión tras cerrar | **Bloqueado**: todas las páginas protegidas → Login |
-
-Páginas comprobadas con la sesión de `userAdmin` ya iniciada:
-
-| Página | Resultado |
-|---|---|
-| `/Admin/Usuarios.aspx` | `200` — lista `userAdmin` y `userNormal` |
-| `/Admin/Canciones.aspx` | `200` (15 816 bytes) |
-| `/Admin/Artistas.aspx` | `200` (12 472 bytes) |
-| `/Admin/Albumes.aspx` | `200` (12 679 bytes) |
-| `/Admin/Playlists.aspx` | `200` (13 888 bytes) |
-| `/Default.aspx` | `200` (22 881 bytes) |
-
-### Autorización (servidor)
-
-| Prueba | Resultado |
-|---|---|
-| Acceso sin sesión a `/Default.aspx` | `302 → Login.aspx?returnUrl=...` |
-| Acceso sin sesión a `/Canciones.aspx`, `/Artistas.aspx`, `/Albumes.aspx`, `/Playlists.aspx` | `302 → Login.aspx?returnUrl=...` |
-| Acceso sin sesión a `/Admin/*` | `302 → Login.aspx?returnUrl=...` |
-| Usuario normal en las 6 páginas públicas | **`200`** en todas |
-| Usuario normal en las 6 páginas `/Admin/*` | **`403 Forbidden`** en todas (sesión autenticada con rol insuficiente) |
-| `/AccesoDenegado.aspx` | `403` con el usuario y rol actuales |
-
-> **Nota de método:** las comprobaciones de acceso se hicieron con la redirección
-> desactivada para observar el código real. Un cliente HTTP que sigue redirecciones
-> automáticamente reporta `200` porque acaba mostrando **la página de login**, no el
-> panel: el contenido del panel (`Usuarios`, `Canciones`…) **nunca** aparece. La
-> evidencia de denegación es la ausencia de ese contenido más el `403`/`302` real.
-
-### Playlists — integridad por propiedad
-
-Verificado contra la base real. Las playlists 1–5 pertenecen a `userNormal;
-1 = Privada, 2 = Pública, 3 = Pública, 4 = Privada, 5 = Pública`.
-
-| Sesión | `id=1` (privada, ajena) | `id=2` (pública) | `id=999` (inexistente) |
-|---|---|---|---|
-| `userNormal` (propietario) | `200` | `200` | `404` |
-| `userAdmin` (no propietario) | **`404`** | `200` | `404` |
-
-* El propietario accede a **todas** sus playlists, incluidas las privadas.
-* Otro usuario ve solo las **públicas**; las privadas ajenas devuelven `404` (no filtra
-  su existencia). **Manipular el `id` en la URL no permite ver ni editar playlists ajenas.**
-
-### Escritura en base de datos
-
-| Prueba | Resultado |
-|---|---|
-| Incrementar reproducciones (`POST /Play.aspx?id=1` + token) | `200 {"ok":true}`; `TBL_SONG.PLAYS` de `Adventure` pasó de **0 → 1** |
-| `GET /Play.aspx` (método incorrecto) | `405` |
-| `POST` sin sesión | Rechazado |
-| `POST` con token inválido | `403 {"ok":false,"error":"token-invalido"}` |
-
-### Seguridad
-
-| Prueba | Resultado |
-|---|---|
-| Inyección SQL: `userAdmin' OR '1'='1` | Sesión **no** iniciada |
-| Inyección SQL: `' OR 1=1--` | Sesión **no** iniciada |
-| Inyección SQL: `admin'; DROP TABLE TBL_USER--` | **`TBL_USER` intacta** (recuento sin cambios) |
-
-### Multimedia (servida por el sitio)
-
-| Recurso | Resultado |
-|---|---|
-| `bensound-adventure.mp3` | `200`, `audio/mpeg`, 4 490 762 bytes |
-| `bensound-dreams.mp3` | `200`, `audio/mpeg`, 801 480 bytes |
-| `bensound-energy.mp3` | `200`, `audio/mpeg`, 701 170 bytes |
-| `bensound-scifi.mp3` | `200`, `audio/mpeg`, 761 252 bytes |
-| `bensound-tomorrow.mp3` | `200`, `audio/mpeg`, 841 186 bytes |
-| Imágenes de usuario / playlist / álbum / artista | `200` con `image/png` o `image/jpeg` |
-
-### Datos reales mostrados
-
-La pantalla de inicio renderiza datos reales de SQL Server (no contenido ficticio):
-
-* Métricas: **5 Canciones**, **5 Artistas**, **5 Álbumes**
-* Catálogo: `Tomorrow` (4), `Scifi` (3), `Energy` (2), `Dreams` (1), `Adventure` (0)
-  con sus artistas desde `TBL_PLAYER`
-* Búsqueda `Canciones.aspx?q=dream` filtra correctamente el listado
-
-### Correcciones aplicadas durante las pruebas
-
-Estos defectos se detectaron **ejecutando** la aplicación y se corrigieron:
-
-1. `App_Code` compilaba como ensamblado separado y no veía `Models`/`Services` →
-   se unificó el código compartido bajo `App_Code` y se pasó a `CodeFile=`.
-2. Sintaxis C# 6/7 (función local, `char + string`) incompatible con el compilador
-   dinámico C# 5 → reescrita en `MediaResolver.cs`.
-3. `using` faltantes: `System.Web.UI.WebControls`, `System.Web.SessionState`,
-   `System.Data.SqlClient` (en `CatalogRepository.cs`).
-4. Las páginas heredaban de `Page` en lugar de `BasePage`, dejando la capa de
-   autorización fuera de la cadena de herencia → corregido en las 19 páginas, con
-   `IsPublicPage = true` en las públicas y `RequiresAdmin = true` en `/Admin/*`.
-5. `Canciones.aspx` referenciaba un manejador `btnAdd_Click` inexistente y un panel
-   redundante → eliminado; el alta se hace con los formularios en línea por canción.
-6. Regla `denyUrlSequences` con `.cs` bloqueaba `Site.css` (contenía `.cs`) →
-   sustituida por `fileExtensions` explícitas.
-7. `Global.asax` necesitaba `CodeFile` y `partial` para el modelo Web Site.
-8. El constructor de `Error.aspx.cs` se llamaba `Error()` en lugar de `ErrorPage()`,
-   por lo que no era un constructor real y `IsPublicPage` nunca se activaba →
-   la página de error redirigía a Login en vez de mostrarse.
-
----
-
-## 8. Estructura del proyecto
+## 3. Estructura del repositorio
 
 ```
 AppWebAvChristianPuchaicela/
-├─ PoliMusic.sln
-├─ BDD_PoliMusic.sql                     ← script original, SIN modificar
-├─ db/
-│  └─ 01_PoliMusic_incremental.sql       ← migración incremental e idempotente
-└─ webapppolimusicv1_asp/
-   ├─ Web.config                          ← cadena de conexión, autorización, seguridad
-   ├─ Global.asax / .asax.cs              ← manejo central de errores
-   ├─ Site.master / .master.cs            ← plantilla con barra lateral y reproductor
-   ├─ Login / Registro / Logout.aspx
-   ├─ Default.aspx                        ← pantalla principal
-   ├─ Canciones.aspx                      ← "Song List"
-   ├─ Artistas.aspx / Albumes.aspx        ← catálogo con detalle
-   ├─ Playlists.aspx / PlaylistDetalle.aspx ← CRUD de playlists propias
-   ├─ Perfil.aspx                         ← datos y contraseña
-   ├─ Play.aspx                           ← endpoint de conteo de reproducciones
-   ├─ Error.aspx / AccesoDenegado.aspx
-   ├─ Admin/                              ← Default, Usuarios, Canciones, Artistas,
-   │                                          Albumes, Playlists
-   ├─ App_Code/
-   │  ├─ Common/  BasePage.cs, Ui.cs      ← autorización base y constructores de HTML
-   │  ├─ Models/  User, Song, Artist, Album, Playlist, CatalogItem
-   │  ├─ Data/    Db, UserRepository, SongRepository, ArtistRepository,
-   │  │           AlbumRepository, PlaylistRepository, CatalogRepository
-   │  └─ Services/ AuthService, PasswordHasher, UserContext, MediaResolver
-   ├─ Content/Site.css                    ← identidad visual vino
-   ├─ Scripts/pollmusic.js                ← reproductor persistente
-   ├─ Assets/                             ← audio, imágenes
-   └─ run/                                ← launcher de IIS Express
-      ├─ applicationhost.config
-      └─ iniciar-polimusic.bat
+├── BDD_PoliMusic.sql                 Script original de la base (UTF-16LE)
+├── db/
+│   └── 01_PoliMusic_incremental.sql  Correcciones de datos, idempotente
+├── PoliMusic.sln                     Solución de la v1 (Web Site)
+├── SongFilesAndImages_resources/     Medios originales sin organizar
+├── webapppolimusicv1_asp/            v1 — Web Site con App_Code (referencia)
+└── SlnAppPoliMusic/
+    ├── SlnAppPoliMusic.slnx
+    └── WebAppPoliMusicV2/            v2 — Web Application Project (ACTUAL)
 ```
 
-**Estadísticas:** 19 páginas `.aspx`, 41 archivos `.cs`, 1 hoja de estilos, 1 script JS.
-Sin dependencias NuGet.
+---
+
+## 4. Arquitectura de la solución V2
+
+Capas estrictas, sin saltos: **la página nunca escribe SQL y el DAL nunca
+decide reglas de negocio**.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  Presentación   *.aspx / *.aspx.cs / Site.master          │
+│                 Common/PageBase.cs   Common/Ui.cs          │
+├──────────────────────────────────────────────────────────┤
+│  Negocio        BLL/*.cs                                  │
+│                 AuthService, UserBll, SongBll, ...        │
+│                 Devuelven OperationResult (mensaje+ok)     │
+├──────────────────────────────────────────────────────────┤
+│  Datos          DAL/*.cs   (ADO.NET, todo parametrizado)  │
+│                 DAL/Db.cs  ← único punto de conexión       │
+├──────────────────────────────────────────────────────────┤
+│  Modelo         Entities/*.cs  (POCOs sin lógica de BD)    │
+└──────────────────────────────────────────────────────────┘
+         Util/  → PasswordHasher, UserSession, MediaResolver,
+                  FileStorage, Constants
+```
+
+### `Entities/` — 6 POCOs
+
+`User`, `Song`, `Artist`, `Album`, `Playlist`, `CatalogItem`.
+Solo propiedades y ayudantes de presentación (`IsAdmin`, `RoleName`,
+`Initials`, `Age`, `FullName`, `ReleaseLabel`, `IsPrivate`, `VisibilityName`,
+`PlayCount`). Ninguna referencia a `System.Data`.
+
+### `DAL/` — 7 archivos
+
+| Archivo | Responsabilidad |
+|---|---|
+| `Db.cs` | `ConnectionString`, `Query<T>`, `QuerySingle<T>`, `ExecuteNonQuery`, `ExecuteScalarInt`, `InsertReturningId`, `ExecuteTransaction(params)`, helpers `P(name, value)` y `ToInt/ToStr/ToDate` |
+| `UserDal.cs` | Login, alta, cambio de contraseña, listado y borrado |
+| `SongDal.cs` | CRUD + `ARTIST_LABEL` con `STUFF(... FOR XML PATH(''))` y `ALBUM_TITLE` por subconsulta |
+| `ArtistDal.cs` | CRUD, borrado en cascada transaccional |
+| `AlbumDal.cs` | CRUD, tracklist (`TBL_TRACKLIST`), cascada transaccional |
+| `PlaylistDal.cs` | CRUD, canciones de la lista (`TBL_PLAYLIST_SONG`), visibilidad |
+| `CatalogDal.cs` | Lectura de `TBL_CATALOG` (tipos de usuario y de playlist) |
+
+Todas las consultas usan `SqlParameter`. **No existe una sola concatenación de
+valores en SQL** en todo el proyecto.
+
+### `BLL/` — 8 archivos
+
+`OperationResult` (`.Ok`, `.Message`, `.Errors`), `AuthService`
+(`AuthResult`, `Authenticate`, `Register`, `ChangePassword`), `UserBll`,
+`SongBll`, `ArtistBll`, `AlbumBll`, `PlaylistBll`, `CatalogBll`.
+
+Aquí viven las reglas: validación de campos obligatorios, longitud máxima
+según el esquema (`VARCHAR(50)` para nombres, títulos, correo y contraseña),
+unicidad de usuario/correo, contraseña mínima de 8 caracteres, y la
+**propiedad de las playlists** (`ReadOwned` / `ReadReadable` / `DeleteOwned`).
+
+### `Util/` — 5 archivos
+
+| Archivo | Detalle |
+|---|---|
+| `Constants.cs` | `ID_USER_NORMAL=0`, `ID_USER_ADMIN=1`, `ID_PLAYLIST_PUBLIC=0`, `ID_PLAYLIST_PRIVATE=1`, claves de sesión `PM_USER`/`PM_CSRF`/`PM_FLASH`, límites de longitud |
+| `PasswordHasher.cs` | PBKDF2-SHA256, 10 000 iteraciones, formato `PBH1$<saltHex>$<hashHex>` = 46 caracteres (cabe en `VARCHAR(50)`). Verifica además SHA-1 y texto plano heredados; `NeedsUpgrade()` indica cuándo migrar |
+| `UserSession.cs` | `SignIn`, `SignOut`, `Current`, `IsAdmin`, `SetFlash`/`ConsumeFlash` |
+| `MediaResolver.cs` | Resolución de rutas con caché, insensible a mayúsculas |
+| `FileStorage.cs` | `SaveImage` / `SaveSong` para `FileUpload` y `HttpPostedFile`, límites 5 MB (imagen) y 50 MB (mp3), `SanitizeFileName`, `DeleteIfExists` |
+
+### `Common/` — 2 archivos
+
+**`PageBase.cs`** — la clase de la que heredan todas las páginas:
+
+* `IsPublicPage` (por defecto `false` → **acceso denegado por defecto**)
+* `RequiresAdmin`
+* `EnforceAuthorization()` en `OnInit`, antes de procesar controles
+* `CsrfToken` / `ValidateCsrf()` con `__PoliMusicToken`
+* Lectura segura de entrada: `FormInt`, `FormStr`, `FormBool`, `FormDate`,
+  `QueryInt`, `QueryStr`
+* `RedirectWithFlash(url, mensaje, esError)` para POST-Redirect-GET
+* `H()` / `A()` / `Url()` para escapar HTML
+
+**`Ui.cs`** — generadores de HTML en C#. Se usa esta vía en lugar de `GridView`
+para tener control total del diseño y para no anidar formularios dentro del
+único `<form runat="server">` del master:
+
+`E`, `A`, `InitialsOf`, `Art`, `PlayPayload`, `PlayQueue`, `SongCard`,
+`AlbumCard`, `ArtistCard`, `PlaylistCard`, `SongRow`, `EmptyState`, `Alert`,
+`StatCard`, `SectionHead`, `PageHead`, `CsrfField`, `Submit`.
+
+### Raíz del proyecto
+
+`Site.master` (+ `.cs` / `.designer.cs`) contiene la barra lateral con SVG
+en línea, la barra superior con buscador y chip de usuario, el **reproductor
+persistente** y el contenedor de avisos. El `<form runat="server">` lleva
+`enctype="multipart/form-data"` para que las subidas funcionen desde cualquier
+página sin formularios anidados.
+
+`Content/Site.css` (~1000 líneas, 12 secciones) y `Scripts/pollmusic.js`
+(reproductor persistente con `sessionStorage`, cola de reproducción, contador
+por AJAX, filtros `[data-pm-filter]`, modales, confirmaciones).
 
 ---
 
-## 9. Identidad visual
+## 5. Inventario de páginas
 
-Paleta **vino (concha de vino)**, definida como variables CSS en `Content\Site.css`:
+19 páginas `.aspx`, cada una con su `.aspx.cs` y `.aspx.designer.cs`.
 
-| Variable | Valor | Uso |
+### Públicas
+
+| Página | Acceso | Función |
 |---|---|---|
-| `--wine-deep` | `#1E0A11` | Fondos profundos |
-| `--wine-main` | `#5C1A2B` | Color principal |
-| `--wine-mid` | `#7B2338` | Superficies intermedias |
-| `--wine-light` | `#C06A80` | Acentos y bordes |
-| `--cream` | `#F3E4E7` | Texto sobre fondo oscuro |
-| `--charcoal` | `#140509` | Superficies y texto principal |
+| `Login.aspx` | Público | Inicio de sesión; respeta `?returnUrl=` |
+| `SignUp.aspx` | Público | Registro con foto opcional |
+| `Logout.aspx` | Público | Cierra sesión y limpia el carrito de reproducción |
+| `AccesoDenegado.aspx` | Público | 403 amable con enlace de vuelta |
+| `Error.aspx` | Público | Error genérico (clase `ErrorPage`) |
+| `Play.aspx` | Público | Endpoint AJAX del contador de reproducciones; responde `204/401/403/405` |
 
-> Se conservan los alias `--brown-*` apuntando a los mismos tonos vino, para no
-> romper ninguna regla existente que los utilice.
+### Requieren sesión
 
-**Contraste verificado (WCAG 2.1).** Todos los pares texto/fondo cumplen **AA**
-(≥ 4.5) en texto normal; el texto principal alcanza **AAA** (16.17:1). El acento
-se ajustó a `#C06A80` precisamente para superar AA tanto como color de enlace
-sobre el fondo (5.32:1) como fondo de botón con texto oscuro encima (5.32:1).
+| Página | `ActiveSection` | Función |
+|---|---|---|
+| `Default.aspx` | `home` | Panel con estadísticas, top de canciones, álbumes, artistas y playlists |
+| `Canciones.aspx` | `songs` | Catálogo de canciones con buscador y cola de reproducción |
+| `Artistas.aspx` | `artists` | Listado; con `?id=` muestra el detalle del artista |
+| `Albumes.aspx` | `albums` | Listado; con `?id=` muestra el tracklist |
+| `Playlists.aspx` | `playlists` | Playlists propias y públicas; alta por modal |
+| `PlaylistDetalle.aspx` | `playlists` | Añadir/quitar canciones, editar y eliminar (solo el dueño) |
+| `Perfil.aspx` | `profile` | Datos personales, foto y cambio de contraseña |
 
-Barra lateral de navegación, tarjetas, tablas, reproductor inferior persistente,
-diseño adaptable (puntos de quiebre en 900 px y 720 px) y estados hover.
-No se copiaron marcas ni logotipos de Spotify.
+### Administración (`RequiresAdmin = true`, carpeta `Admin/`)
 
----
+| Página | `ActiveSection` | Función |
+|---|---|---|
+| `Admin/Default.aspx` | `admin` | Resumen del panel |
+| `Admin/Canciones.aspx` | `admin-songs` | CRUD de canciones + subida de mp3 |
+| `Admin/Artistas.aspx` | `admin-artists` | CRUD de artistas + foto |
+| `Admin/Albumes.aspx` | `admin-albums` | CRUD de álbumes, portada y tracklist |
+| `Admin/Playlists.aspx` | `admin-playlists` | CRUD de playlists de cualquier usuario |
+| `Admin/Usuarios.aspx` | `admin-users` | Listado, cambio de rol y baja de usuarios |
 
-## 10. Funcionalidad pendiente y limitaciones reales
-
-Se documenta con motivos concretos, sin ocultar nada.
-
-1. **No se pudo compilar con MSBuild / csc desde el entorno del asistente.**
-   Las herramientas de compilación (`MSBuild.exe`, `csc.exe`) estuvieron bloqueadas por
-   la política de seguridad del entorno. **La verificación se hizo, en cambio, con el
-   compilador dinámico de ASP.NET**, que compiló las 19 páginas y todo `App_Code` sin
-   errores. Si abre la solución en Visual Studio y obtiene algún aviso del compilador,
-   quedan pendientes de revisar los **avisos** (no errores) de estilo, por ejemplo
-   variables no utilizadas.
-
-2. **`db\01_PoliMusic_incremental.sql` no se ejecutó contra la base.**
-   La aplicación funciona sin él: el archivo corrige 3 rutas de imagen con
-   mayúsculas incorrectas (`Playlist2.png` → `playlist2.png`) y reinicia `PLAYS` nulos.
-   Ejecútelo cuando lo considere oportuno; es idempotente y no borra nada.
-
-3. **Subida de archivos de audio/imagen desde la interfaz no implementada.**
-   Los formularios de administración registran **rutas** (`SONG_PATH`, imágenes), no
-   suben archivos binarios. Requeriría un control `FileUpload` y escritura en disco;
-   se dejó fuera para no ampliar la superficie de riesgo sin pedirlo el enunciado.
-
-4. **Reproducción real de audio no verificada de oído.**
-   Se confirmó que los 5 archivos `.mp3` se sirven con `Content-Type: audio/mpeg` y
-   tamaño correcto, y que las páginas emiten las cargas `data-pm-play` / `data-pm-queue`.
-   No se pudo comprobar la salida de sonido (el entorno no tiene audio).
-   En un navegador real el reproductor funciona con esos archivos válidos.
-
-5. **Credenciales de base de datos: RESUELTO.**
-   La cadena ya **no** está en `Web.config`. Se movió a `Web.secrets.config`
-   (excluido por `.gitignore`) y `Web.config` usa `configSource`, de modo que el
-   repositorio no publica el usuario ni la contraseña de la base de datos:
-
-   ```xml
-   <!-- Web.config -->
-   <connectionStrings configSource="Web.secrets.config" />
-   ```
-
-   `Web.secrets.config.example` sí se versiona, con valores de ejemplo, como
-   plantilla para otros entornos (ver §1, Paso 2).
-
-6. **El reproductor usa `sessionStorage`, no almacenamiento en servidor.**
-   El estado (canción, posición, volumen) persiste entre páginas dentro de la misma
-   pestaña, pero no se sincroniza entre dispositivos ni sesiones. Es el comportamiento
-   previsto.
-
-7. **`Christian.Puchaicela` tiene contraseña asignada.**
-   La base traía un hash SHA-1 heredado cuya contraseña no estaba documentada en
-   ningún archivo, por lo que era imposible iniciar sesión con esa cuenta. A
-   petición del usuario se le asignó `12345678` y se re-cifró con PBKDF2
-   (`PBH1$91ed0001664f0b4e$1e524e645ecad30d96976447`).
-   El hash anterior (`7C222FB2927D828AF22F592134E8932480637C0D`) queda documentado
-   por si se necesitara revertir. El cambio se aplicó solo a la base en ejecución;
-   `BDD_PoliMusic.sql` permanece intacto.
+Los formularios con varias acciones usan **un solo submit** y se distinguen por
+el valor de `name="action"`; nunca hay `<form>` anidados.
 
 ---
 
-## 11. Solución de problemas
+## 6. Modelo de datos
 
-| Síntoma | Causa y solución |
+Base **`BDD_PoliMusic`** — 9 tablas. **El esquema no se ha modificado.**
+
+| Tabla | Columnas principales |
 |---|---|
-| `Failed to register URL … (0x800700b7) No se puede crear un archivo que ya existe` | **PoliMusic ya está en ejecución** en el puerto 8090. No es un error de la aplicación. Abra `http://localhost:8090/`, o detenga la instancia con `run\iniciar-polimusic.bat stop` y vuelva a arrancar. El script actual ya lo detecta y no muestra este error |
-| `HTTP 400 - Invalid Hostname` | Usó `127.0.0.1`. Abra `http://localhost:8090/` |
-| `HTTP 502` o "upstream connect failed" | Hay un proxy HTTP interceptando. Excluya `localhost` del proxy |
-| La primera carga tarda varios segundos | Normal: ASP.NET compila el sitio en el primer acceso |
-| "Error de compilación" en el navegador | Lea el mensaje: indica archivo y línea. Verifique que `App_Code\` no contenga `.aspx` |
-| Aviso de que una canción no se reproduce | El archivo `.mp3` indicado en `SONG_PATH` no existe en `Assets\SongFiles\` |
-| No puede iniciar sesión con una cuenta nueva | El registro siempre asigna rol Usuario; el acceso a `/Admin/*` sigue denegado |
-| `Login failed for user 'SU_USUARIO'` | Revise `Web.secrets.config`: instancia, puerto y credenciales |
-| El sitio da error 500 y no carga ninguna página | Falta `Web.secrets.config`, o su raíz está envuelta en `<configuration>`. Vea §1, Paso 2 |
-| Los datos salen vacíos | Ejecute `BDD_PoliMusic.sql` (o la migración) y confirme que hay filas en `TBL_SONG` |
-| Tras un login correcto sigue viendo `/Login.aspx` | Compruebe la contraseña: `userAdmin` y `userNormal` usan `12345678` (§2). Si es correcta, revise que las cookies de sesión no estén bloqueadas |
-| `User 'userNormal'` recibe **403** en `/Admin/Usuarios.aspx` | Comportamiento correcto: la autorización se valida en el servidor (§3) |
+| `TBL_CATALOG` | `ID_CATALOG`, `COD_CATALOG_PARENT`, `COD_CATALOG`, `VALUE` |
+| `TBL_SONG` | `ID_SONG`, `SONG_NAME` `varchar(50)`, `SONG_PATH` `varchar(255)`, `PLAYS` |
+| `TBL_USER` | `ID_USER`, `USERNAME`, `PASSWORD` `varchar(50)`, `EMAIL`, `BIRTHDAY`, `USER_PHOTO`, `USER_TYPE` |
+| `TBL_ALBUM` | `ID_ALBUM`, `TITLE_ALBUM`, `RELEASE_YEAR`, `ALBUM_IMAGE_PATH` |
+| `TBL_TRACKLIST` | `ID_ALBUM` + `ID_SONG` (PK compuesta) |
+| `TBL_ARTIST` | `ID_ARTIST`, `ARTIST_NAME`, `ARTIST_LASTNAME`, `ARTIST_IMAGE` |
+| `TBL_PLAYER` | `ID_SONG` + `ID_ARTIST` (PK compuesta) |
+| `TBL_PLAYLIST` | `ID_PLAYLIST`, `ID_USER`, `TITLE`, `CREATION_DATE`, `TYPE`, `PHOTO` |
+| `TBL_PLAYLIST_SONG` | `ID_PLAYLIST` + `ID_SONG` (PK compuesta) |
+
+**Catálogos** (`TBL_CATALOG`): padre `1` = tipo de usuario (`0` normal,
+`1` admin); padre `2` = tipo de playlist (`0` pública, `1` privada). Esos
+valores están replicados en `Util/Constants.cs`.
+
+**Relaciones sin `FOREIGN KEY`.** El esquema original no declara claves
+foráneas, así que la integridad se garantiza en `DAL` con transacciones
+explícitas (`ExecuteTransaction`): al borrar un artista, un álbum o una
+playlist se eliminan primero sus filas en `TBL_PLAYER`, `TBL_TRACKLIST` o
+`TBL_PLAYLIST_SONG`.
+
+**`PLAYS` es la columna del contador**, no `REPRODUCCIONES`.
 
 ---
 
-## 12. Cumplimiento del enunciado
+## 7. Sistema de diseño
 
-| Requisito | Estado |
+Identidad vino/concha de vino, definida con variables CSS en `Content/Site.css`:
+
+```css
+--wine-950  --wine-900  --wine-800  --wine-700  --wine-600
+--rose-500  --rose-400  --rose-300  --rose-200
+```
+
+* Barra lateral fija con iconos SVG en línea y estado activo por `ActiveSection`.
+* Barra superior tipo *glass* con buscador y chip de usuario.
+* Tarjetas con portada, degradado y superposición de acciones al pasar el ratón.
+* Tablas de canciones con numeración, duración y acciones por fila.
+* Pantallas de autenticación partidas en dos mitades (arte + formulario).
+* Reproductor persistente anclado al pie: sobrevive a la navegación entre
+  páginas mediante `sessionStorage`, permite avanzar/retroceder en la cola y
+  envía el contador por `fetch` a `Play.aspx`.
+* Estados vacíos, avisos (*flash*) que se ocultan solos, modales y
+  confirmaciones nativos estilizados.
+* Puntos de ruptura responsivos para escritorio, tableta y móvil.
+
+---
+
+## 8. Seguridad
+
+| Riesgo | Mitigación |
 |---|---|
-| ASP.NET Web Forms clásico, .NET Framework, C# | Cumplido |
-| Sin migrar a Core / MVC / Blazor / Node / React | Cumplido |
-| Cadena de conexión única y centralizada | Cumplido (`PoliMusicConnection`) |
-| Dos roles con permisos diferenciados | Cumplido y verificado |
-| CRUD de admin sobre Usuarios/Canciones/Artistas/Álbumes/Playlists | Cumplido |
-| CRUD de playlists propias por el usuario | Cumplido (crear, editar, eliminar, agregar/quitar canciones) |
-| Autorización en el servidor, deny-by-default | Cumplido y verificado |
-| Imposible ver/editar playlists ajenas manipulando la URL | Cumplido y verificado |
-| Contraseñas con hash + salt | Cumplido (PBKDF2) |
-| El registro asigna siempre el rol Usuario | Cumplido y verificado |
-| Pantalla principal con datos reales y estados vacíos | Cumplido |
-| Paleta vino (concha de vino), diseño adaptable | Cumplido |
-| Reproductor HTML5 funcional | Cumplido (archivos válidos verificados) |
-| Consultas parametrizadas | Cumplido y verificado |
-| `README` con instrucciones, permisos, pruebas reales y pendientes | Este documento |
-| `BDD_PoliMusic.sql` original preservado | Cumplido (sin modificar) |
-| Scripts de migración incrementales | Cumplido (`db\01_PoliMusic_incremental.sql`) |
+| Acceso sin sesión | `PageBase` deniega por defecto; la comprobación ocurre en `OnInit`, en servidor |
+| Escalada a administrador | `RequiresAdmin` + `Admin/*` protegido; `AccesoDenegado.aspx` |
+| Inyección SQL | 100 % consultas parametrizadas en `DAL` |
+| XSS | Todo texto dinámico pasa por `Ui.E()` / `H()` / `A()` |
+| CSRF | Token por sesión en `__PoliMusicToken`, validado en cada POST |
+| Contraseñas | PBKDF2-SHA256 con salt; comparación en tiempo constante; migración transparente desde SHA-1 y texto plano |
+| Fijación de sesión | `UserSession.SignIn` renueva la sesión y el token CSRF |
+| Subida de archivos | Extensión y tamaño validados (5 MB imagen / 50 MB mp3), nombre saneado, carpeta destino fija |
+| Fuga de código fuente | `requestFiltering` bloquea `.cs`, `.csproj`, `.sln` y `Web.config` |
+| Clickjacking / MIME sniffing | `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` |
+| Cookies | `httpOnlyCookies="true"`, `sameSite="Lax"` |
+
+La autenticación es **propia** (`<authentication mode="None" />`), no
+`FormsAuthentication`. Se eligió así para no mezclar dos mecanismos y para
+poder apoyar la autorización en una sola clase (`PageBase`).
+
+---
+
+## 9. Errores corregidos respecto a la versión anterior
+
+Estos son los defectos reales que traía el proyecto V2 heredado y que
+impedían que compilara o funcionara:
+
+| # | Archivo | Error | Corrección |
+|---|---|---|---|
+| 1 | `WebAppPoliMusicV2.csproj` | `<TargetFrameworkVersion>v2.0</TargetFrameworkVersion>` | `v4.8` — imprescindible para `Rfc2898DeriveBytes` con `HashAlgorithmName` |
+| 2 | `DAL/Song.cs` | Consultaba la columna `REPRODUCCIONES`, que no existe | Reescrito contra `PLAYS`; se añadió `ARTIST_LABEL` y `ALBUM_TITLE` |
+| 3 | `BLL/Song.cs` | Propagaba la columna inexistente | Reescrito con validaciones y `OperationResult` |
+| 4 | `Song.aspx` | Enlazaba `PLAY_COUNT` (campo inexistente) | Página eliminada; el catálogo es `Canciones.aspx` |
+| 5 | `Login.aspx.cs` | `Response.Redirect("~/DesktopAdmin.aspx")` — esa página nunca existió | Los administradores van a `~/Default.aspx`; existe un panel real en `Admin/Default.aspx` |
+| 6 | `Util/Hash.cs` | Solo SHA-1, incompatible con las cuentas PBKDF2 | Sustituido por `Util/PasswordHasher.cs` (PBKDF2 + SHA-1 + texto plano) |
+| 7 | `FileManagement.cs` | Heredaba de `System.Web.UI.Page` sin ser una página | Sustituido por la clase estática `Util/FileStorage.cs` |
+| 8 | `Playlists.aspx`, `PlaylistDetalle.aspx` | `<form>` anidados dentro del `<form runat="server">` del master | Un único formulario; acciones distinguidas por `name="action"` |
+| 9 | Paneles de búsqueda | `<form action="...">` habría eliminado el formulario del master | `.pm-filter` + `data-pm-filter` con `applyFilter()` en JS |
+| 10 | `CatalogBll.cs` | Estaba en una carpeta equivocada (`AppWebPoliMusic/`) | Movido a `BLL/`; carpeta sobrante eliminada |
+| 11 | `SignUp.aspx` | Usaba `FormValues["username"]`, que no existía | Propiedades `UserNameValue` / `EmailValue` / `BirthdayValue` en el code-behind |
+| 12 | `PageBase.cs` | Variables `out` declaradas en línea (C# 7) | Reescrito con variables predeclaradas |
+| 13 | `Site.master.cs` | `!IsPostBack` no existe en `MasterPage` | `!Page.IsPostBack` |
+| 14 | `Albumes.aspx` | `"\u00C1lbumes"` como escape C# dentro del marcado | Literal `"Álbumes"` |
+| 15 | Varias páginas | Entidades HTML (`&iacute;`, `&mdash;`) dentro de argumentos de C# | Texto acentuado directo y `&mdash;` emitido de forma condicional |
+| 16 | `SlnAppPoliMusic.slnx` | Nombre de carpeta obsoleto `..._ASPX_F2.0` | `PoliMusic`; se eliminó un `.slnx` vacío en la raíz |
+| 17 | `Util/UserSession.cs` | `HttpSessionState` sin `using System.Web.SessionState` → *"no se encontró el nombre del tipo"* | Directiva añadida |
+| 18 | `Web.config` | `<fileExtensions>` redeclaraba `.cs`, `.csproj`, `.sln`, ya denegadas por IIS → **HTTP 500.19 / 0x800700b7** | Bloque eliminado; IIS ya las bloquea y trata `web.config` como *hiddenSegment* |
+| 19 | `.vs/.../config/applicationhost.config` | El sitio estaba en `Clr2IntegratedAppPool` → *"Atributo 'targetFramework' no reconocido"* con **ASP.NET 2.0.50727** | Cambiado a `Clr4IntegratedAppPool` |
+
+### Sobre el error de `targetFramework` y ASP.NET 2.0
+
+Este error no está en el código ni en `Web.config`: está en el **grupo de
+aplicaciones** con el que IIS Express sirve el sitio.
+
+```
+Atributo 'targetFramework' no reconocido.
+Versión de Microsoft .NET Framework: 2.0.50727.9188
+Versión ASP.NET: 2.0.50727.9183
+```
+
+`targetFramework` en `<compilation>` y `<httpRuntime>` se añadió en **.NET 4.0**;
+si el sitio corre sobre el CLR 2.0, el analizador de configuración no lo
+reconoce. El proyecto venía con `TargetFrameworkVersion>v2.0`, y Visual Studio
+creó el sitio en `.vs/<solución>/config/applicationhost.config` con el grupo
+`Clr2IntegratedAppPool`. **Cambiar el `.csproj` a v4.8 no actualiza ese archivo**,
+porque VS reutiliza la entrada del sitio que ya existe.
+
+La corrección es una línea:
+
+```xml
+<site name="WebAppPoliMusicV2" id="2">
+  <application path="/" applicationPool="Clr4IntegratedAppPool">
+```
+
+Si en el futuro el sitio vuelve a arrancar en v2.0, la vía limpia es cerrar
+Visual Studio y borrar la carpeta `.vs/` de la solución: al reabrir, VS
+regenera el `applicationhost.config` a partir del `TargetFrameworkVersion`
+actual (v4.8) y asigna `Clr4IntegratedAppPool` por sí solo.
+
+> **Requisito:** tener instalado el .NET Framework 4.8 (Release ≥ 528040).
+> Verifíquelo en `HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full`.
+
+### Sobre el 500.19
+
+El error de configuración no venía de un archivo mal formado, sino de una
+**entrada duplicada**. IIS resuelve `requestFiltering` fusionando su
+`applicationHost.config` con el `Web.config` de la aplicación; si este último
+vuelve a declarar una clave que ya existe en el nivel superior, la fusión falla:
+
+```
+HTTP Error 500.19 - Internal Server Error
+Error Code: 0x800700b7
+No se puede agregar una entrada de colección duplicada de tipo 'add'
+con un atributo de clave única 'fileExtension' establecido en '.csproj'
+```
+
+La solución **no** es poner `<clear />` —eso desactivaría también las
+protecciones por defecto, dejando `.config`, `.master` y `.resx` accesibles—,
+sino **no redeclarar** lo que IIS ya bloquea. La lista por defecto incluye
+`.asax`, `.ascx`, `.master`, `.skin`, `.browser`, `.sitemap`, `.config`, `.cs`,
+`.csproj`, `.vb`, `.vbproj`, `.vsdisco`, `.webinfo`, `.licx`, `.resx` y
+`.resources`. El `Web.config` de la V2 solo declara ahora `requestLimits`.
+
+Además, la v1 usaba `App_Code` con `CodeFile=`, lo que impide compilar con
+antelación y detectar errores hasta la primera petición. La V2 es un **Web
+Application Project** con `CodeBehind=` y `.designer.cs`, de modo que el
+compilador revisa todo el código al construir.
+
+---
+
+## 10. Estado de verificación
+
+**La primera compilación y ejecución real las hizo el usuario, y encontró tres
+errores** (recogidos como #17, #18 y #19 en la tabla anterior): un `using`
+faltante en `Util/UserSession.cs`, el 500.19 de `Web.config` y el sitio
+sirviéndose sobre el CLR 2.0. Los tres están corregidos.
+
+Antes de eso, el entorno donde se generó el código bloqueaba `MSBuild.exe`,
+`csc.exe` y el compilador Roslyn (*"Known Windows LOLBin"*), así que la
+verificación inicial fue estática. Comprobaciones ejecutadas sobre los 69
+archivos `.cs` y 51 archivos de contenido:
+
+| Comprobación | Resultado |
+|---|---|
+| Directivas `using` vs tipos usados en cada archivo | 1 faltante → corregido (#17) |
+| Balance de llaves y paréntesis en todos los `.cs` | Sin desajustes |
+| Formularios anidados por página y master | Exactamente 1 `<form>` en cada archivo |
+| `Inherits` / `CodeBehind` vs clase y namespace reales | 19 páginas + master correctas |
+| Controles usados en code-behind vs `.designer.cs` | Sin controles sin declarar |
+| Aridad de llamadas a clases propias vs firmas | Sin desajustes |
+| Llamadas `Ui.*` en el marcado vs firmas | Sin desajustes |
+| Coherencia `.csproj` ↔ disco | 69/69 archivos `.cs` y 51/51 de contenido incluidos; ninguna entrada huérfana |
+| Columnas SQL contra `BDD_PoliMusic.sql` | Todas las columnas usadas existen con el nombre y tipo correctos |
+
+Si aparece un nuevo error de compilación, la causa más probable es otro `using`
+faltante: el chequeo automático que se usó aquí solo cubría una lista de tipos
+conocidos (`HttpSessionState`, `SqlConnection`, `ConfigurationManager`,
+`Rfc2898DeriveBytes`, `FileUpload`, `JavaScriptSerializer`, etc.).
+
+---
+
+## 11. Tareas pendientes conocidas
+
+* **Compilar y ejecutar** en un equipo con Visual Studio para confirmar el
+  apartado anterior.
+* La v1 (`webapppolimusicv1_asp/`) sigue en el repositorio como referencia.
+  Cuando la V2 esté validada, puede eliminarse junto con `PoliMusic.sln`.
+* `TBL_PLAYER` (relación artista–canción) existe en el esquema y el DAL la lee,
+  pero todavía no hay pantalla para asignar varios artistas a una canción; hoy
+  el artista se resuelve por la etiqueta agregada de `SongDal`.
+* `SongFiles/` tiene 5 pistas, pero `BDD_PoliMusic.sql` solo inserta 4 filas en
+  `TBL_SONG` (`bensound-tomorrow.mp3` queda sin registrar). Es un sobrante de
+  los datos de prueba, no un error de la aplicación.
+
+---
+
+## Créditos
+
+Trabajo académico de **Aplicaciones Web Avanzadas**.
+Pistas de audio de demostración: [Bensound](https://www.bensound.com/).
