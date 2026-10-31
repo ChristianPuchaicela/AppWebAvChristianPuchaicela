@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -37,8 +37,15 @@ namespace WebAppPoliMusicV3
                 lblMessage.Text = "Please, write a login/password.";
                 return;
             }
+            string rawPassword = password;
             password = EntityLayer.PoliMusicV3.Util.Hash.GeneratePasswordHash(password);
             DataTable dtUser = new BLL.PoliMusicV3.User(strConnString).AuthenticateUser(login, password);
+
+            if (dtUser == null || dtUser.Rows.Count == 0)
+            {
+                // Fallback si la contraseña en BD está en texto plano
+                dtUser = new BLL.PoliMusicV3.User(strConnString).AuthenticateUser(login, rawPassword);
+            }
 
             if (dtUser != null && dtUser.Rows.Count > 0)
             {
@@ -59,7 +66,14 @@ namespace WebAppPoliMusicV3
                 {
                     Session[EntityLayer.PoliMusicV3.Util.Constants.USER] = user;
                     FormsAuthentication.RedirectFromLoginPage(login, true);
-                    Response.Redirect("~/DesktopAdmin.aspx?uid=" + user.ID, true);
+                    if (System.IO.File.Exists(Server.MapPath("~/DesktopAdmin.aspx")))
+                    {
+                        Response.Redirect("~/DesktopAdmin.aspx?uid=" + user.ID, true);
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Default.aspx", true);
+                    }
                 }
                 else
                 {

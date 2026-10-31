@@ -300,6 +300,25 @@ por AJAX, filtros `[data-pm-filter]`, modales, confirmaciones).
 Los formularios con varias acciones usan **un solo submit** y se distinguen por
 el valor de `name="action"`; nunca hay `<form>` anidados.
 
+### ¿Dónde está `Song.aspx`?
+
+**No existe en la V2.** La v1 tenía una página `Song.aspx` que enlazaba la
+columna `PLAY_COUNT`, inexistente en `BDD_PoliMusic` (la real es `PLAYS`), así
+que se eliminó. Su funcionalidad está repartida en tres páginas y tres capas:
+
+| Qué | Dónde |
+|---|---|
+| Catálogo y búsqueda de canciones | `Canciones.aspx` + `Canciones.aspx.cs` |
+| Contador de reproducciones (AJAX) | `Play.aspx` + `Play.aspx.cs` |
+| Alta, edición y borrado | `Admin/Canciones.aspx` + `Admin/Canciones.aspx.cs` |
+| Modelo | `Entities/Song.cs` |
+| Acceso a datos | `DAL/SongDal.cs` |
+| Reglas de negocio | `BLL/SongBll.cs` |
+
+La reproducción en sí **no tiene página propia**: el reproductor vive en
+`Site.master` y `Scripts/pollmusic.js`, y las canciones se le entregan
+serializadas en `data-pm-play` por `Ui.PlayPayload`.
+
 ---
 
 ## 6. Modelo de datos
@@ -403,6 +422,45 @@ impedían que compilara o funcionara:
 | 17 | `Util/UserSession.cs` | `HttpSessionState` sin `using System.Web.SessionState` → *"no se encontró el nombre del tipo"* | Directiva añadida |
 | 18 | `Web.config` | `<fileExtensions>` redeclaraba `.cs`, `.csproj`, `.sln`, ya denegadas por IIS → **HTTP 500.19 / 0x800700b7** | Bloque eliminado; IIS ya las bloquea y trata `web.config` como *hiddenSegment* |
 | 19 | `.vs/.../config/applicationhost.config` | El sitio estaba en `Clr2IntegratedAppPool` → *"Atributo 'targetFramework' no reconocido"* con **ASP.NET 2.0.50727** | Cambiado a `Clr4IntegratedAppPool` |
+| 20 | `Util/MediaResolver.cs` | Devolvía `~/UserImages/default.jpg` y se escribía tal cual en `<img src>` y en el JSON del reproductor → **ninguna imagen ni audio cargaba** | Nuevo `ToUrl()` con `VirtualPathUtility.ToAbsolute`: devuelve `/UserImages/default.jpg` |
+
+### Sobre las imágenes y el audio que no cargaban
+
+`MediaResolver` encontraba el archivo correctamente, pero devolvía la ruta
+**lógica** de ASP.NET:
+
+```html
+<img src="~/UserImages/default.jpg">
+```
+
+El navegador no entiende `~/`. Ese prefijo solo lo resuelven ASP.NET
+(`ResolveUrl`, controles de servidor) y `Server.MapPath`. Al recibirlo literal,
+el navegador pide `http://localhost:56575/~/UserImages/default.jpg` y obtiene
+404; el `onerror` de `Ui.Art` ocultaba la imagen y quedaba solo el degradado
+vino del contenedor. Lo mismo ocurría con el `src` de las pistas en el JSON del
+reproductor, así que **tampoco sonaba la música**.
+
+Por eso los estilos y los enlaces sí funcionaban: `Site.master` los emitía con
+`ResolveUrl(...)`, pero las imágenes pasaban por `MediaResolver.Resolve` y el
+resultado se escribía directo.
+
+La corrección se hizo en un solo punto, `MediaResolver.Resolve`, que es de donde
+salen todas las rutas de medios:
+
+```csharp
+public static string ToUrl(string virtualPath)
+{
+    HttpContext ctx = HttpContext.Current;
+    if (ctx == null || ctx.Request == null) return virtualPath;  // tiempo de diseno
+    try { return VirtualPathUtility.ToAbsolute(virtualPath); }
+    catch (Exception) { return virtualPath; }
+}
+```
+
+`VirtualPathUtility.ToAbsolute` respeta el directorio virtual: con la aplicación
+en la raíz devuelve `/UserImages/default.jpg` y publicada en `/PoliMusic`
+devuelve `/PoliMusic/UserImages/default.jpg`. `FileStorage.DeleteIfExists` sigue
+funcionando porque `Server.MapPath` acepta ambas formas.
 
 ### Sobre el error de `targetFramework` y ASP.NET 2.0
 
@@ -467,10 +525,11 @@ compilador revisa todo el código al construir.
 
 ## 10. Estado de verificación
 
-**La primera compilación y ejecución real las hizo el usuario, y encontró tres
-errores** (recogidos como #17, #18 y #19 en la tabla anterior): un `using`
-faltante en `Util/UserSession.cs`, el 500.19 de `Web.config` y el sitio
-sirviéndose sobre el CLR 2.0. Los tres están corregidos.
+**La primera compilación y ejecución real las hizo el usuario, y encontró cuatro
+errores** (recogidos como #17 a #20 en la tabla anterior): un `using` faltante en
+`Util/UserSession.cs`, el 500.19 de `Web.config`, el sitio sirviéndose sobre el
+CLR 2.0 y las rutas `~/` sin resolver que rompían todas las imágenes y el audio.
+Los cuatro están corregidos.
 
 Antes de eso, el entorno donde se generó el código bloqueaba `MSBuild.exe`,
 `csc.exe` y el compilador Roslyn (*"Known Windows LOLBin"*), así que la
